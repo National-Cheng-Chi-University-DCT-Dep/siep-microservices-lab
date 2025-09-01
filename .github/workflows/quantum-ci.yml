@@ -1,0 +1,64 @@
+name: 量子服務 CI/CD
+
+on:
+  push:
+    paths:
+      - 'quantum-service/**'
+      - '.github/workflows/quantum-ci.yml'
+  pull_request:
+    paths:
+      - 'quantum-service/**'
+
+jobs:
+  test:
+    name: 測試量子服務
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: 設定 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          
+      - name: 安裝依賴
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r quantum-service/requirements.txt
+          pip install pytest flake8
+          
+      - name: 程式碼風格檢查
+        run: |
+          flake8 quantum-service/ --count --show-source --statistics
+          
+      - name: 運行測試
+        run: |
+          pytest quantum-service/tests/
+          
+  build:
+    name: 建置與部署量子服務鏡像
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: 設定 AWS 認證
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+          
+      - name: 登入 ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+        
+      - name: 建置與推送 Docker 鏡像
+        uses: docker/build-push-action@v4
+        with:
+          context: ./quantum-service
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/quantum-service:latest,${{ steps.login-ecr.outputs.registry }}/quantum-service:${{ github.sha }}

@@ -1,0 +1,90 @@
+# OS specific
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE & Editor files
+.idea/
+.vscode/
+.nova/
+*.sublime-*
+*.code-workspace
+.history/
+
+# Go backend
+/backend/server
+/backend/tmp/
+/backend/logs/
+/backend/*.log
+/backend/vendor/
+/backend/coverage.out
+/backend/.env
+/backend/dist/
+/backend/api/swagger/
+/backend/*.env
+!/backend/test.env
+
+# Node.js (frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+/frontend/.next/
+/frontend/out/
+/frontend/build/
+/frontend/.env*
+!/frontend/.env.example
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Environment variables
+.env
+.env.*
+!.env.example
+vault.env
+!test.env
+
+# Docker
+.docker/
+
+# Terraform
+/terraform/.terraform/
+/terraform/terraform.tfstate
+/terraform/terraform.tfstate.backup
+/terraform/.terraform.lock.hcl
+/terraform/.terraform.tfstate.lock.info
+/terraform/environments/*/terraform.tfvars
+/terraform/environments/*/.terraform/
+/terraform/environments/*/terraform.tfstate
+/terraform/environments/*/terraform.tfstate.backup
+/terraform/environments/*/.terraform.lock.hcl
+/terraform/environments/*/.terraform.tfstate.lock.info
+
+# Python (Quantum Service)
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+dist/
+eggs/
+*.egg-info/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Logs and databases
+*.log
+*.sqlite
+*.sqlite3
+*.db
