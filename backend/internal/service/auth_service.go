@@ -74,9 +74,6 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*vo.AuthTokenResponse,
 
 	// 設定預設角色
 	role := "basic"
-	if req.Role != "" {
-		role = req.Role
-	}
 
 	// 建立使用者
 	user := model.User{
@@ -159,8 +156,8 @@ func (s *AuthService) Register(req *dto.RegisterRequest) (*vo.AuthTokenResponse,
 // Login 使用者登入
 func (s *AuthService) Login(req *dto.LoginRequest) (*vo.AuthTokenResponse, error) {
 	// 驗證請求
-	if err := req.ValidateCredentials(); err != nil {
-		return nil, err
+	if req.Username == "" || req.Password == "" {
+		return nil, fmt.Errorf("username and password are required")
 	}
 
 	// 查找使用者

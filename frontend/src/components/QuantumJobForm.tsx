@@ -164,9 +164,10 @@ const QuantumJobForm: React.FC = () => {
       // 提交成功後導航到結果頁面
       router.push(`/quantum/jobs/${result.job_id}`);
       
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '提交任務失敗，請稍後再試';
       console.error('提交任務失敗:', err);
-      setError(err.message || '提交任務失敗，請稍後再試');
+      setError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

@@ -56,6 +56,14 @@ type SubmitQuantumJobResponse struct {
 	CreatedAt time.Time `json:"created_at" example:"2025-11-15T12:30:45Z"`
 }
 
+// 分頁資訊
+type PaginationInfo struct {
+	Page       int `json:"page" example:"1"`
+	PageSize   int `json:"page_size" example:"20"`
+	Total      int `json:"total" example:"100"`
+	TotalPages int `json:"total_pages" example:"5"`
+}
+
 // ListQuantumJobsResponse 列出量子任務響應
 type ListQuantumJobsResponse struct {
 	Jobs       []QuantumJobResponse `json:"jobs"`
@@ -91,4 +99,16 @@ type BatchSubmitQuantumJobsResponse struct {
 type BatchSubmissionFailure struct {
 	Index   int    `json:"index" example:"3"`
 	Message string `json:"message" example:"參數驗證失敗"`
+}
+
+// ErrorResponse 錯誤響應
+type ErrorResponse struct {
+	Error   string `json:"error" example:"Bad Request"`
+	Message string `json:"message" example:"Invalid request parameters"`
+}
+
+// SuccessResponse 成功響應
+type SuccessResponse struct {
+	Success bool   `json:"success" example:"true"`
+	Message string `json:"message" example:"Operation completed successfully"`
 }

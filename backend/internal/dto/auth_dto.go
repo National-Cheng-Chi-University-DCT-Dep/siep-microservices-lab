@@ -4,7 +4,7 @@ import "github.com/google/uuid"
 
 // 登入請求
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required,email" example:"user@example.com"`
+	Username string `json:"username" binding:"required" example:"johnsmith"`
 	Password string `json:"password" binding:"required,min=6" example:"SecurePassword123!"`
 }
 
@@ -28,8 +28,8 @@ type VerifyEmailRequest struct {
 
 // 更改密碼請求
 type ChangePasswordRequest struct {
-	OldPassword string `json:"old_password" binding:"required" example:"OldPassword123!"`
-	NewPassword string `json:"new_password" binding:"required,min=8" example:"NewPassword456!"`
+	CurrentPassword string `json:"current_password" binding:"required" example:"OldPassword123!"`
+	NewPassword     string `json:"new_password" binding:"required,min=8" example:"NewPassword456!"`
 }
 
 // 重設密碼請求
@@ -71,4 +71,16 @@ type GenerateAPIKeyRequest struct {
 // 撤銷 API Key 請求
 type RevokeAPIKeyRequest struct {
 	KeyID string `json:"key_id" binding:"required,uuid" example:"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"`
+}
+
+// 確認重設密碼請求
+type ConfirmResetPasswordRequest struct {
+	Token       string `json:"token" binding:"required" example:"eyJhbGciOiJIUzI1NiIsIn..."`
+	NewPassword string `json:"new_password" binding:"required,min=8" example:"NewPassword456!"`
+}
+
+// 更新個人資料請求
+type UpdateProfileRequest struct {
+	FullName string `json:"full_name" binding:"omitempty,max=100" example:"John Smith"`
+	AvatarURL string `json:"avatar_url" binding:"omitempty,url" example:"https://example.com/avatar.jpg"`
 } 
