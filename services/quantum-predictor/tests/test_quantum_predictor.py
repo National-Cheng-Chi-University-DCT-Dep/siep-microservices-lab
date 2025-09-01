@@ -39,6 +39,7 @@ class TestQuantumPredictor:
         assert hasattr(self.predictor, 'backend')
         assert hasattr(self.predictor, 'circuit')
 
+    @patch('quantum_predictor.QISKIT_AVAILABLE', True)
     @patch('quantum_predictor.IBMQ')
     def test_load_account_success(self, mock_ibmq):
         """測試成功載入 IBM Quantum 帳戶"""
@@ -49,6 +50,7 @@ class TestQuantumPredictor:
         assert result is True
         mock_ibmq.load_account.assert_called_once_with("test_token")
 
+    @patch('quantum_predictor.QISKIT_AVAILABLE', True)
     @patch('quantum_predictor.IBMQ')
     def test_load_account_failure(self, mock_ibmq):
         """測試載入 IBM Quantum 帳戶失敗"""
@@ -65,6 +67,7 @@ class TestQuantumPredictor:
         assert len(processed_data) > 0
         assert all(isinstance(item, (int, float)) for item in processed_data)
 
+    @patch('quantum_predictor.QISKIT_AVAILABLE', True)
     @patch('quantum_predictor.QuantumCircuit')
     def test_create_circuit(self, mock_circuit):
         """測試創建量子電路"""
@@ -74,6 +77,7 @@ class TestQuantumPredictor:
         assert circuit is not None
         mock_circuit.assert_called_once_with(4, 1)
 
+    @patch('quantum_predictor.QISKIT_AVAILABLE', True)
     @patch('quantum_predictor.execute')
     def test_run_quantum_analysis(self, mock_execute):
         """測試運行量子分析"""
@@ -189,19 +193,20 @@ class TestQuantumPredictorIntegration:
         }
         
         # 使用模擬器進行測試
-        with patch('quantum_predictor.IBMQ') as mock_ibmq:
-            mock_ibmq.load_account.return_value = None
-            mock_ibmq.get_provider.return_value = MagicMock()
-            
-            result = predictor.analyze_threats(input_data)
-            
-            assert isinstance(result, dict)
-            assert 'prediction' in result
-            assert 'probability' in result
-            assert 'confidence' in result
-            assert 'is_malicious' in result
-            assert 'backend' in result
-            assert 'execution_time' in result
+        with patch('quantum_predictor.QISKIT_AVAILABLE', True):
+            with patch('quantum_predictor.IBMQ') as mock_ibmq:
+                mock_ibmq.load_account.return_value = None
+                mock_ibmq.get_provider.return_value = MagicMock()
+                
+                result = predictor.analyze_threats(input_data)
+                
+                assert isinstance(result, dict)
+                assert 'prediction' in result
+                assert 'probability' in result
+                assert 'confidence' in result
+                assert 'is_malicious' in result
+                assert 'backend' in result
+                assert 'execution_time' in result
 
 
 if __name__ == "__main__":
