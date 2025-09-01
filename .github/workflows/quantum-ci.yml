@@ -3,11 +3,11 @@ name: 量子服務 CI/CD
 on:
   push:
     paths:
-      - 'quantum-service/**'
+      - 'services/quantum-predictor/**'
       - '.github/workflows/quantum-ci.yml'
   pull_request:
     paths:
-      - 'quantum-service/**'
+      - 'services/quantum-predictor/**'
 
 jobs:
   test:
@@ -25,12 +25,12 @@ jobs:
       - name: 安裝依賴
         run: |
           python -m pip install --upgrade pip
-          pip install -r quantum-service/requirements.txt
+          pip install -r services/quantum-predictor/requirements.txt
           pip install pytest flake8
           
       - name: 程式碼風格檢查
         run: |
-          flake8 quantum-service/ --count --show-source --statistics
+          flake8 services/quantum-predictor/ --count --show-source --statistics
           
       - name: 運行測試
         run: |
