@@ -1,0 +1,28 @@
+# 量子計算核心依賴
+qiskit==0.43.0
+qiskit-ibm-provider>=0.6.0
+qiskit-aer>=0.12.0
+
+# 數據處理與科學計算
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.10.0
+scikit-learn>=1.2.0
+
+# 視覺化
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# 工具與輔助庫
+python-dotenv>=1.0.0
+requests>=2.31.0
+pydantic>=2.0.0
+tqdm>=4.65.0
+PyYAML>=6.0
+
+# 開發工具
+pytest>=7.3.0
+pytest-cov>=4.1.0
+black>=23.3.0
+isort>=5.12.0
+flake8>=6.0.0
