@@ -1,0 +1,219 @@
+syntax = "proto3";
+
+package threat_intelligence;
+
+option go_package = "github.com/lipeichen/Ultimate-Security-Intelligence-Platform/backend/api/proto;threatpb";
+
+import "google/protobuf/timestamp.proto";
+
+// 威脅情報服務
+service ThreatIntelligenceService {
+  // 取得威脅情報
+  rpc GetThreatIntelligence(GetThreatIntelligenceRequest) returns (GetThreatIntelligenceResponse);
+  
+  // 列出威脅情報
+  rpc ListThreatIntelligence(ListThreatIntelligenceRequest) returns (ListThreatIntelligenceResponse);
+  
+  // 建立威脅情報
+  rpc CreateThreatIntelligence(CreateThreatIntelligenceRequest) returns (CreateThreatIntelligenceResponse);
+  
+  // 更新威脅情報
+  rpc UpdateThreatIntelligence(UpdateThreatIntelligenceRequest) returns (UpdateThreatIntelligenceResponse);
+  
+  // 刪除威脅情報
+  rpc DeleteThreatIntelligence(DeleteThreatIntelligenceRequest) returns (DeleteThreatIntelligenceResponse);
+  
+  // 搜尋威脅情報
+  rpc SearchThreatIntelligence(SearchThreatIntelligenceRequest) returns (SearchThreatIntelligenceResponse);
+  
+  // 取得統計資訊
+  rpc GetThreatStatistics(GetThreatStatisticsRequest) returns (GetThreatStatisticsResponse);
+  
+  // 即時威脅訂閱（streaming）
+  rpc SubscribeThreats(SubscribeThreatsRequest) returns (stream ThreatNotification);
+}
+
+// 威脅情報資料結構
+message ThreatIntelligence {
+  string id = 1;
+  string ip_address = 2;
+  string domain = 3;
+  string url = 4;
+  string file_hash = 5;
+  string threat_type = 6;
+  string severity = 7;
+  string description = 8;
+  repeated string tags = 9;
+  map<string, string> metadata = 10;
+  int32 confidence_score = 11;
+  string source = 12;
+  google.protobuf.Timestamp first_seen = 13;
+  google.protobuf.Timestamp last_seen = 14;
+  google.protobuf.Timestamp created_at = 15;
+  google.protobuf.Timestamp updated_at = 16;
+  bool is_active = 17;
+  string risk_score = 18;
+}
+
+// 分頁資訊
+message Pagination {
+  int32 current_page = 1;
+  int32 page_size = 2;
+  int32 total_pages = 3;
+  int64 total_records = 4;
+  bool has_next = 5;
+  bool has_previous = 6;
+}
+
+// 請求訊息
+message GetThreatIntelligenceRequest {
+  string id = 1;
+}
+
+message GetThreatIntelligenceResponse {
+  bool success = 1;
+  string message = 2;
+  ThreatIntelligence data = 3;
+  string error_code = 4;
+}
+
+message ListThreatIntelligenceRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string threat_type = 3;
+  string severity = 4;
+  string source = 5;
+  string sort_by = 6;
+  string sort_order = 7;
+  bool is_active = 8;
+}
+
+message ListThreatIntelligenceResponse {
+  bool success = 1;
+  string message = 2;
+  repeated ThreatIntelligence threats = 3;
+  Pagination pagination = 4;
+  string error_code = 5;
+}
+
+message CreateThreatIntelligenceRequest {
+  string ip_address = 1;
+  string domain = 2;
+  string url = 3;
+  string file_hash = 4;
+  string threat_type = 5;
+  string severity = 6;
+  string description = 7;
+  repeated string tags = 8;
+  map<string, string> metadata = 9;
+  int32 confidence_score = 10;
+  string source = 11;
+  google.protobuf.Timestamp first_seen = 12;
+  google.protobuf.Timestamp last_seen = 13;
+}
+
+message CreateThreatIntelligenceResponse {
+  bool success = 1;
+  string message = 2;
+  ThreatIntelligence data = 3;
+  string error_code = 4;
+}
+
+message UpdateThreatIntelligenceRequest {
+  string id = 1;
+  string ip_address = 2;
+  string domain = 3;
+  string url = 4;
+  string file_hash = 5;
+  string threat_type = 6;
+  string severity = 7;
+  string description = 8;
+  repeated string tags = 9;
+  map<string, string> metadata = 10;
+  int32 confidence_score = 11;
+  string source = 12;
+  google.protobuf.Timestamp first_seen = 13;
+  google.protobuf.Timestamp last_seen = 14;
+  bool is_active = 15;
+}
+
+message UpdateThreatIntelligenceResponse {
+  bool success = 1;
+  string message = 2;
+  ThreatIntelligence data = 3;
+  string error_code = 4;
+}
+
+message DeleteThreatIntelligenceRequest {
+  string id = 1;
+}
+
+message DeleteThreatIntelligenceResponse {
+  bool success = 1;
+  string message = 2;
+  string error_code = 3;
+}
+
+message SearchThreatIntelligenceRequest {
+  string query = 1;
+  string ip_address = 2;
+  string domain = 3;
+  string threat_type = 4;
+  string severity = 5;
+  int32 page = 6;
+  int32 page_size = 7;
+  string sort_by = 8;
+  string sort_order = 9;
+}
+
+message SearchThreatIntelligenceResponse {
+  bool success = 1;
+  string message = 2;
+  repeated ThreatIntelligence threats = 3;
+  Pagination pagination = 4;
+  string error_code = 5;
+}
+
+message GetThreatStatisticsRequest {
+  string period = 1; // daily, weekly, monthly
+}
+
+message GetThreatStatisticsResponse {
+  bool success = 1;
+  string message = 2;
+  ThreatStatistics data = 3;
+  string error_code = 4;
+}
+
+message ThreatStatistics {
+  int64 total_threats = 1;
+  int64 active_threats = 2;
+  int64 high_risk_threats = 3;
+  int64 medium_risk_threats = 4;
+  int64 low_risk_threats = 5;
+  map<string, int64> threat_types = 6;
+  map<string, int64> sources = 7;
+  repeated DailyStats daily_stats = 8;
+}
+
+message DailyStats {
+  string date = 1;
+  int64 count = 2;
+  int64 high_risk = 3;
+  int64 medium_risk = 4;
+  int64 low_risk = 5;
+}
+
+message SubscribeThreatsRequest {
+  repeated string threat_types = 1;
+  repeated string severities = 2;
+  int32 min_confidence_score = 3;
+}
+
+message ThreatNotification {
+  string notification_id = 1;
+  string type = 2; // created, updated, deleted
+  ThreatIntelligence threat = 3;
+  google.protobuf.Timestamp timestamp = 4;
+  map<string, string> metadata = 5;
+} 

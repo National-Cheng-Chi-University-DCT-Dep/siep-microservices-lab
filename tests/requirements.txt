@@ -1,0 +1,10 @@
+robotframework==7.0.1
+robotframework-requests==0.9.6
+robotframework-jsonlibrary==0.5
+robotframework-databaselibrary==1.4.2
+robotframework-httplibrary==0.4.2
+psycopg2-binary==2.9.9
+requests==2.31.0
+jsonschema==4.20.0
+Faker==20.1.0
+python-dateutil==2.8.2 

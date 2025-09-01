@@ -1,0 +1,513 @@
+# =============================================================================
+# Ultimate Security Intelligence Platform - 生產環境 Docker Compose 配置
+# 完整的服務編排、網路設定、持久化存儲、健康檢查和安全性配置
+# =============================================================================
+
+version: "3.8"
+
+# =============================================================================
+# 服務定義
+# =============================================================================
+services:
+  # ---------------------------------------------------------------------------
+  # 反向代理服務 - Nginx
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.24-alpine
+    container_name: security-intel-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks:
+      - security-intel-network
+    environment:
+      - TZ=Asia/Taipei
+    labels:
+      - "com.security-intel.service=nginx"
+      - "com.security-intel.environment=production"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ---------------------------------------------------------------------------
+  # 後端服務
+  # ---------------------------------------------------------------------------
+  backend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/ultimate-security-intelligence/backend:${BACKEND_VERSION:-latest}
+    container_name: security-intel-backend
+    restart: unless-stopped
+    expose:
+      - "8080"
+      - "50051"
+    environment:
+      # 資料庫設定
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${POSTGRES_DB:-security_intel}
+      - DB_USER=${POSTGRES_USER:-security_user}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_SSL_MODE=require
+      - DB_MAX_IDLE_CONNS=25
+      - DB_MAX_OPEN_CONNS=100
+      - DB_CONN_MAX_LIFETIME=1h
+
+      # Redis 設定
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_DB=0
+
+      # MQTT 設定
+      - MQTT_BROKER_HOST=mosquitto
+      - MQTT_BROKER_PORT=1883
+      - MQTT_USERNAME=${MQTT_USERNAME}
+      - MQTT_PASSWORD=${MQTT_PASSWORD}
+      - MQTT_CLIENT_ID=security-intel-backend
+
+      # JWT 設定
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRE_HOURS=24
+      - JWT_REFRESH_EXPIRE_HOURS=720
+
+      # 應用程式設定
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_PORT=8080
+      - APP_HOST=0.0.0.0
+      - GRPC_PORT=50051
+      - LOG_LEVEL=info
+      - LOG_FORMAT=json
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://your-domain.com}
+
+      # 監控設定
+      - METRICS_ENABLED=true
+      - METRICS_PORT=9090
+      - HEALTH_CHECK_PATH=/health
+
+      # 外部服務 API 設定
+      - VIRUSTOTAL_API_KEY=${VIRUSTOTAL_API_KEY}
+      - MITRE_API_KEY=${MITRE_API_KEY}
+      - SHODAN_API_KEY=${SHODAN_API_KEY}
+
+      # 時區設定
+      - TZ=Asia/Taipei
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    networks:
+      - security-intel-network
+    volumes:
+      - ./backend/logs:/app/logs
+      - ./backend/uploads:/app/uploads
+      - ./backend/config:/app/config:ro
+    labels:
+      - "com.security-intel.service=backend"
+      - "com.security-intel.environment=production"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+  # ---------------------------------------------------------------------------
+  # 前端服務
+  # ---------------------------------------------------------------------------
+  frontend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/ultimate-security-intelligence/frontend:${FRONTEND_VERSION:-latest}
+    container_name: security-intel-frontend
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.your-domain.com}
+      - NEXT_PUBLIC_WEBSOCKET_URL=${NEXT_PUBLIC_WEBSOCKET_URL:-wss://api.your-domain.com}
+      - NEXT_PUBLIC_MQTT_URL=${NEXT_PUBLIC_MQTT_URL:-wss://mqtt.your-domain.com}
+      - NEXT_PUBLIC_APP_NAME=Ultimate Security Intelligence Platform
+      - NEXT_PUBLIC_APP_VERSION=${FRONTEND_VERSION:-latest}
+      - NEXT_TELEMETRY_DISABLED=1
+      - TZ=Asia/Taipei
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - security-intel-network
+    volumes:
+      - ./frontend/logs:/app/logs
+    labels:
+      - "com.security-intel.service=frontend"
+      - "com.security-intel.environment=production"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  # ---------------------------------------------------------------------------
+  # 資料庫服務 - PostgreSQL
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: security-intel-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-security_intel}
+      - POSTGRES_USER=${POSTGRES_USER:-security_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --locale=C
+      - TZ=Asia/Taipei
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+      - ./database/backups:/backups
+      - ./database/logs:/var/log/postgresql
+    networks:
+      - security-intel-network
+    ports:
+      - "5432:5432"
+    labels:
+      - "com.security-intel.service=postgres"
+      - "com.security-intel.environment=production"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-security_user} -d ${POSTGRES_DB:-security_intel}",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 2G
+        reservations:
+          cpus: "0.5"
+          memory: 1G
+
+  # ---------------------------------------------------------------------------
+  # 快取服務 - Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: security-intel-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    environment:
+      - TZ=Asia/Taipei
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - ./redis/logs:/var/log/redis
+    networks:
+      - security-intel-network
+    ports:
+      - "6379:6379"
+    labels:
+      - "com.security-intel.service=redis"
+      - "com.security-intel.environment=production"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  # ---------------------------------------------------------------------------
+  # 訊息佇列服務 - MQTT (Eclipse Mosquitto)
+  # ---------------------------------------------------------------------------
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: security-intel-mosquitto
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/logs:/mosquitto/log
+    networks:
+      - security-intel-network
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    environment:
+      - TZ=Asia/Taipei
+    labels:
+      - "com.security-intel.service=mosquitto"
+      - "com.security-intel.environment=production"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.1"
+          memory: 128M
+
+  # ---------------------------------------------------------------------------
+  # 監控服務 - Prometheus
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: security-intel-prometheus
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=200h"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./prometheus/config:/etc/prometheus:ro
+      - prometheus_data:/prometheus
+    networks:
+      - security-intel-network
+    ports:
+      - "9090:9090"
+    environment:
+      - TZ=Asia/Taipei
+    labels:
+      - "com.security-intel.service=prometheus"
+      - "com.security-intel.environment=production"
+    depends_on:
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  # ---------------------------------------------------------------------------
+  # 監控視覺化服務 - Grafana
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: security-intel-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - TZ=Asia/Taipei
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    networks:
+      - security-intel-network
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    labels:
+      - "com.security-intel.service=grafana"
+      - "com.security-intel.environment=production"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  # ---------------------------------------------------------------------------
+  # 日誌聚合服務 - ELK Stack (Elasticsearch)
+  # ---------------------------------------------------------------------------
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: security-intel-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - TZ=Asia/Taipei
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./elasticsearch/config:/usr/share/elasticsearch/config:ro
+    networks:
+      - security-intel-network
+    ports:
+      - "9200:9200"
+    labels:
+      - "com.security-intel.service=elasticsearch"
+      - "com.security-intel.environment=production"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+
+  # ---------------------------------------------------------------------------
+  # 日誌視覺化服務 - Kibana
+  # ---------------------------------------------------------------------------
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: security-intel-kibana
+    restart: unless-stopped
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - TZ=Asia/Taipei
+    volumes:
+      - ./kibana/config:/usr/share/kibana/config:ro
+    networks:
+      - security-intel-network
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    labels:
+      - "com.security-intel.service=kibana"
+      - "com.security-intel.environment=production"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+
+  # ---------------------------------------------------------------------------
+  # 備份服務
+  # ---------------------------------------------------------------------------
+  backup:
+    image: alpine:latest
+    container_name: security-intel-backup
+    restart: "no"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-security_intel}
+      - POSTGRES_USER=${POSTGRES_USER:-security_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - BACKUP_SCHEDULE=${BACKUP_SCHEDULE:-0 2 * * *}
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-30}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-ap-northeast-1}
+      - S3_BACKUP_BUCKET=${S3_BACKUP_BUCKET}
+      - TZ=Asia/Taipei
+    volumes:
+      - ./backup/scripts:/scripts:ro
+      - ./backup/logs:/logs
+      - postgres_data:/var/lib/postgresql/data:ro
+    networks:
+      - security-intel-network
+    depends_on:
+      - postgres
+    labels:
+      - "com.security-intel.service=backup"
+      - "com.security-intel.environment=production"
+    command: /scripts/backup.sh
+
+# =============================================================================
+# 網路設定
+# =============================================================================
+networks:
+  security-intel-network:
+    driver: bridge
+    name: security-intel-network
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
+
+# =============================================================================
+# 持久化存儲
+# =============================================================================
+volumes:
+  postgres_data:
+    driver: local
+    name: security-intel-postgres-data
+  redis_data:
+    driver: local
+    name: security-intel-redis-data
+  prometheus_data:
+    driver: local
+    name: security-intel-prometheus-data
+  grafana_data:
+    driver: local
+    name: security-intel-grafana-data
+  elasticsearch_data:
+    driver: local
+    name: security-intel-elasticsearch-data
+# =============================================================================
+# 使用說明
+# =============================================================================
+# 1. 建立環境變數檔案：
+#    cp .env.example .env
+#    # 編輯 .env 設定所需的環境變數
+#
+# 2. 啟動服務：
+#    docker-compose -f docker-compose.prod.yml up -d
+#
+# 3. 檢查服務狀態：
+#    docker-compose -f docker-compose.prod.yml ps
+#
+# 4. 查看日誌：
+#    docker-compose -f docker-compose.prod.yml logs -f [service_name]
+#
+# 5. 停止服務：
+#    docker-compose -f docker-compose.prod.yml down
+#
+# 6. 完整清理（包含數據）：
+#    docker-compose -f docker-compose.prod.yml down -v
+# =============================================================================

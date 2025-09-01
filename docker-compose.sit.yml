@@ -1,0 +1,467 @@
+# =============================================================================
+# Ultimate Security Intelligence Platform - 測試環境 (SIT) Docker Compose 配置
+# 接近生產環境的配置，用於整合測試和用戶驗收測試
+# =============================================================================
+
+version: "3.8"
+
+# =============================================================================
+# 服務定義
+# =============================================================================
+services:
+  # ---------------------------------------------------------------------------
+  # 反向代理服務 - Nginx
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.24-alpine
+    container_name: security-intel-nginx-sit
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx-sit.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl-sit:/etc/nginx/ssl:ro
+      - ./nginx/logs-sit:/var/log/nginx
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    networks:
+      - security-intel-sit
+    environment:
+      - TZ=Asia/Taipei
+    labels:
+      - "com.security-intel.service=nginx"
+      - "com.security-intel.environment=sit"
+
+  # ---------------------------------------------------------------------------
+  # 後端服務
+  # ---------------------------------------------------------------------------
+  backend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/ultimate-security-intelligence/backend:${BACKEND_VERSION:-sit}
+    container_name: security-intel-backend-sit
+    restart: unless-stopped
+    expose:
+      - "8080"
+      - "50051"
+    environment:
+      # 資料庫設定
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${POSTGRES_DB:-security_intel_sit}
+      - DB_USER=${POSTGRES_USER:-sit_user}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_SSL_MODE=prefer
+      - DB_MAX_IDLE_CONNS=10
+      - DB_MAX_OPEN_CONNS=50
+      - DB_CONN_MAX_LIFETIME=30m
+
+      # Redis 設定
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_DB=0
+
+      # MQTT 設定
+      - MQTT_BROKER_HOST=mosquitto
+      - MQTT_BROKER_PORT=1883
+      - MQTT_USERNAME=${MQTT_USERNAME}
+      - MQTT_PASSWORD=${MQTT_PASSWORD}
+      - MQTT_CLIENT_ID=security-intel-backend-sit
+
+      # JWT 設定
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRE_HOURS=24
+      - JWT_REFRESH_EXPIRE_HOURS=168
+
+      # 應用程式設定
+      - APP_ENV=staging
+      - APP_DEBUG=false
+      - APP_PORT=8080
+      - APP_HOST=0.0.0.0
+      - GRPC_PORT=50051
+      - LOG_LEVEL=info
+      - LOG_FORMAT=json
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-https://sit.your-domain.com}
+
+      # 監控設定
+      - METRICS_ENABLED=true
+      - METRICS_PORT=9090
+      - HEALTH_CHECK_PATH=/health
+
+      # 外部服務 API 設定（測試用）
+      - VIRUSTOTAL_API_KEY=${VIRUSTOTAL_API_KEY_SIT}
+      - MITRE_API_KEY=${MITRE_API_KEY_SIT}
+      - SHODAN_API_KEY=${SHODAN_API_KEY_SIT}
+
+      # 時區設定
+      - TZ=Asia/Taipei
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    networks:
+      - security-intel-sit
+    volumes:
+      - ./backend/logs-sit:/app/logs
+      - ./backend/uploads-sit:/app/uploads
+      - ./backend/config-sit:/app/config:ro
+    labels:
+      - "com.security-intel.service=backend"
+      - "com.security-intel.environment=sit"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.8"
+          memory: 800M
+        reservations:
+          cpus: "0.4"
+          memory: 400M
+
+  # ---------------------------------------------------------------------------
+  # 前端服務
+  # ---------------------------------------------------------------------------
+  frontend:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/ultimate-security-intelligence/frontend:${FRONTEND_VERSION:-sit}
+    container_name: security-intel-frontend-sit
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://sit-api.your-domain.com}
+      - NEXT_PUBLIC_WEBSOCKET_URL=${NEXT_PUBLIC_WEBSOCKET_URL:-wss://sit-api.your-domain.com}
+      - NEXT_PUBLIC_MQTT_URL=${NEXT_PUBLIC_MQTT_URL:-wss://sit-mqtt.your-domain.com}
+      - NEXT_PUBLIC_APP_NAME=Security Intelligence Platform (SIT)
+      - NEXT_PUBLIC_APP_VERSION=${FRONTEND_VERSION:-sit}
+      - NEXT_TELEMETRY_DISABLED=1
+      - TZ=Asia/Taipei
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - security-intel-sit
+    volumes:
+      - ./frontend/logs-sit:/app/logs
+    labels:
+      - "com.security-intel.service=frontend"
+      - "com.security-intel.environment=sit"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.4"
+          memory: 400M
+        reservations:
+          cpus: "0.2"
+          memory: 200M
+
+  # ---------------------------------------------------------------------------
+  # 資料庫服務 - PostgreSQL
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: security-intel-postgres-sit
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-security_intel_sit}
+      - POSTGRES_USER=${POSTGRES_USER:-sit_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --locale=C
+      - TZ=Asia/Taipei
+    volumes:
+      - postgres_sit_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+      - ./database/backups-sit:/backups
+    networks:
+      - security-intel-sit
+    ports:
+      - "5433:5432"
+    labels:
+      - "com.security-intel.service=postgres"
+      - "com.security-intel.environment=sit"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER:-sit_user} -d ${POSTGRES_DB:-security_intel_sit}",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.8"
+          memory: 1G
+        reservations:
+          cpus: "0.4"
+          memory: 512M
+
+  # ---------------------------------------------------------------------------
+  # 快取服務 - Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: security-intel-redis-sit
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    environment:
+      - TZ=Asia/Taipei
+    volumes:
+      - redis_sit_data:/data
+      - ./redis/redis-sit.conf:/usr/local/etc/redis/redis.conf:ro
+    networks:
+      - security-intel-sit
+    ports:
+      - "6380:6379"
+    labels:
+      - "com.security-intel.service=redis"
+      - "com.security-intel.environment=sit"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.4"
+          memory: 400M
+        reservations:
+          cpus: "0.2"
+          memory: 200M
+
+  # ---------------------------------------------------------------------------
+  # 訊息佇列服務 - MQTT
+  # ---------------------------------------------------------------------------
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: security-intel-mosquitto-sit
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto/config-sit:/mosquitto/config:ro
+      - mosquitto_sit_data:/mosquitto/data
+      - ./mosquitto/logs-sit:/mosquitto/log
+    networks:
+      - security-intel-sit
+    ports:
+      - "1884:1883"
+      - "9002:9001"
+    environment:
+      - TZ=Asia/Taipei
+    labels:
+      - "com.security-intel.service=mosquitto"
+      - "com.security-intel.environment=sit"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 200M
+        reservations:
+          cpus: "0.1"
+          memory: 100M
+
+  # ---------------------------------------------------------------------------
+  # 監控服務 - Prometheus
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: security-intel-prometheus-sit
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=72h"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./prometheus/config-sit:/etc/prometheus:ro
+      - prometheus_sit_data:/prometheus
+    networks:
+      - security-intel-sit
+    ports:
+      - "9091:9090"
+    environment:
+      - TZ=Asia/Taipei
+    labels:
+      - "com.security-intel.service=prometheus"
+      - "com.security-intel.environment=sit"
+    depends_on:
+      - backend
+    deploy:
+      resources:
+        limits:
+          cpus: "0.4"
+          memory: 400M
+        reservations:
+          cpus: "0.2"
+          memory: 200M
+
+  # ---------------------------------------------------------------------------
+  # 監控視覺化服務 - Grafana
+  # ---------------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:latest
+    container_name: security-intel-grafana-sit
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-sit_admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+      - GF_SERVER_ROOT_URL=https://sit-grafana.your-domain.com
+      - TZ=Asia/Taipei
+    volumes:
+      - grafana_sit_data:/var/lib/grafana
+      - ./grafana/provisioning-sit:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards-sit:/var/lib/grafana/dashboards:ro
+    networks:
+      - security-intel-sit
+    ports:
+      - "3002:3000"
+    depends_on:
+      - prometheus
+    labels:
+      - "com.security-intel.service=grafana"
+      - "com.security-intel.environment=sit"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.4"
+          memory: 400M
+        reservations:
+          cpus: "0.2"
+          memory: 200M
+
+  # ---------------------------------------------------------------------------
+  # 測試數據生成器
+  # ---------------------------------------------------------------------------
+  test-data-generator:
+    image: alpine:latest
+    container_name: security-intel-test-data-generator
+    restart: "no"
+    environment:
+      - TARGET_API_URL=http://backend:8080
+      - DATA_GENERATION_INTERVAL=300
+      - TZ=Asia/Taipei
+    volumes:
+      - ./test-data:/scripts:ro
+      - ./test-data/logs:/logs
+    networks:
+      - security-intel-sit
+    depends_on:
+      backend:
+        condition: service_healthy
+    labels:
+      - "com.security-intel.service=test-data-generator"
+      - "com.security-intel.environment=sit"
+    command: /scripts/generate-test-data.sh
+
+  # ---------------------------------------------------------------------------
+  # 自動化測試執行器
+  # ---------------------------------------------------------------------------
+  test-runner:
+    image: alpine:latest
+    container_name: security-intel-test-runner
+    restart: "no"
+    environment:
+      - TARGET_API_URL=http://backend:8080
+      - TARGET_FRONTEND_URL=http://frontend:3000
+      - TEST_SCHEDULE=${TEST_SCHEDULE:-0 */6 * * *}
+      - TZ=Asia/Taipei
+    volumes:
+      - ./tests:/tests:ro
+      - ./test-results:/test-results
+    networks:
+      - security-intel-sit
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    labels:
+      - "com.security-intel.service=test-runner"
+      - "com.security-intel.environment=sit"
+    command: /tests/run-automated-tests.sh
+
+# =============================================================================
+# 網路設定
+# =============================================================================
+networks:
+  security-intel-sit:
+    driver: bridge
+    name: security-intel-sit
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.21.0.0/16
+          gateway: 172.21.0.1
+
+# =============================================================================
+# 持久化存儲
+# =============================================================================
+volumes:
+  postgres_sit_data:
+    driver: local
+    name: security-intel-postgres-sit-data
+  redis_sit_data:
+    driver: local
+    name: security-intel-redis-sit-data
+  mosquitto_sit_data:
+    driver: local
+    name: security-intel-mosquitto-sit-data
+  prometheus_sit_data:
+    driver: local
+    name: security-intel-prometheus-sit-data
+  grafana_sit_data:
+    driver: local
+    name: security-intel-grafana-sit-data
+# =============================================================================
+# 使用說明
+# =============================================================================
+# 1. 設定環境變數：
+#    cp .env.sit.example .env.sit
+#    # 編輯 .env.sit 設定測試環境變數
+#
+# 2. 啟動測試環境：
+#    docker-compose -f docker-compose.sit.yml --env-file .env.sit up -d
+#
+# 3. 檢查服務狀態：
+#    docker-compose -f docker-compose.sit.yml ps
+#
+# 4. 執行測試：
+#    docker-compose -f docker-compose.sit.yml run --rm test-runner
+#
+# 5. 查看監控：
+#    http://localhost:3002 (Grafana)
+#    http://localhost:9091 (Prometheus)
+#
+# 6. 停止服務：
+#    docker-compose -f docker-compose.sit.yml down
+#
+# 服務端口：
+# - Nginx：80/443
+# - PostgreSQL：5433
+# - Redis：6380
+# - MQTT：1884/9002
+# - Prometheus：9091
+# - Grafana：3002
+# =============================================================================

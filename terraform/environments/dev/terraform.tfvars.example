@@ -1,0 +1,200 @@
+# =============================================================================
+# Ultimate Security Intelligence Platform - Development Environment Variables
+# 開發環境配置範例檔案
+# =============================================================================
+# 
+# 使用方式：
+# 1. 複製此檔案為 terraform.tfvars
+# 2. 修改以下變數值以符合您的需求
+# 3. 確保敏感資訊不會被提交到版本控制
+# 
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 基本設定
+# -----------------------------------------------------------------------------
+
+# 專案名稱
+project_name = "security-intel"
+
+# 環境名稱
+environment = "dev"
+
+# AWS 區域
+aws_region = "ap-northeast-1"
+
+# 負責人
+owner = "security-team"
+
+# -----------------------------------------------------------------------------
+# 網路設定
+# -----------------------------------------------------------------------------
+
+# VPC CIDR 區塊
+vpc_cidr = "10.0.0.0/16"
+
+# 可用性區域
+availability_zones = ["ap-northeast-1a", "ap-northeast-1c"]
+
+# 公開子網路 CIDR
+public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+
+# 私有子網路 CIDR
+private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
+
+# 允許存取的 CIDR 區塊
+allowed_cidr_blocks = ["0.0.0.0/0"]  # 開發環境允許所有來源
+
+# -----------------------------------------------------------------------------
+# 資料庫設定
+# -----------------------------------------------------------------------------
+
+# RDS 實例類型
+db_instance_class = "db.t3.micro"
+
+# 初始儲存空間 (GB)
+db_allocated_storage = 20
+
+# 最大儲存空間 (GB)
+db_max_allocated_storage = 100
+
+# PostgreSQL 版本
+db_engine_version = "15.4"
+
+# 資料庫使用者名稱
+db_username = "security_user"
+
+# 資料庫名稱
+db_database_name = "security_intel"
+
+# 備份保留天數
+db_backup_retention_period = 7
+
+# 刪除時跳過最終快照（開發環境）
+db_skip_final_snapshot = true
+
+# -----------------------------------------------------------------------------
+# ECS 設定
+# -----------------------------------------------------------------------------
+
+# ECS 任務 CPU
+ecs_task_cpu = 256
+
+# ECS 任務記憶體 (MB)
+ecs_task_memory = 512
+
+# 所需任務數量
+ecs_desired_count = 1
+
+# 容器端口
+ecs_container_port = 8080
+
+# 後端映像標籤
+backend_image_tag = "123456789012.dkr.ecr.ap-northeast-1.amazonaws.com/security-intel-backend:latest"
+
+# -----------------------------------------------------------------------------
+# 負載平衡器設定
+# -----------------------------------------------------------------------------
+
+# 健康檢查路徑
+alb_health_check_path = "/health"
+
+# 健康檢查間隔 (秒)
+alb_health_check_interval = 30
+
+# 健康檢查超時 (秒)
+alb_health_check_timeout = 5
+
+# 健康檢查成功次數閾值
+alb_healthy_threshold = 2
+
+# 健康檢查失敗次數閾值
+alb_unhealthy_threshold = 2
+
+# -----------------------------------------------------------------------------
+# 安全性設定
+# -----------------------------------------------------------------------------
+
+# 啟用 WAF
+enable_waf = true
+
+# 啟用 SSL（需要域名）
+enable_ssl = false
+
+# 域名（如果有）
+# domain_name = "dev.security-intel.com"
+
+# SSL 憑證替代域名
+# subject_alternative_names = ["api.dev.security-intel.com", "www.dev.security-intel.com"]
+
+# 啟用安全性警報
+enable_security_alerts = true
+
+# 安全性警報郵件
+security_alert_email = "security-team@company.com"
+
+# 啟用 VPC Flow Logs
+enable_vpc_flow_logs = true
+
+# 啟用刪除保護（開發環境通常設為 false）
+enable_deletion_protection = false
+
+# -----------------------------------------------------------------------------
+# 監控設定
+# -----------------------------------------------------------------------------
+
+# CloudWatch 日誌保留天數
+log_retention_in_days = 14
+
+# 啟用 CloudWatch 日誌
+enable_cloudwatch_logs = true
+
+# -----------------------------------------------------------------------------
+# 敏感資訊設定
+# -----------------------------------------------------------------------------
+# 注意：以下敏感資訊應該透過環境變數或 AWS Secrets Manager 設定
+# 請勿在此檔案中設定真實的敏感資訊
+
+# JWT 簽名密鑰（請使用強密碼）
+jwt_secret = "your-super-secure-jwt-secret-key-here"
+
+# 資料加密金鑰（請使用強密碼）
+encryption_key = "your-super-secure-encryption-key-here"
+
+# API 金鑰（請使用強密碼）
+api_key = "your-super-secure-api-key-here"
+
+# 第三方服務 Token
+third_party_tokens = {
+  "abuseipdb" = "your-abuseipdb-api-key"
+  "virustotal" = "your-virustotal-api-key"
+  "shodan" = "your-shodan-api-key"
+}
+
+# -----------------------------------------------------------------------------
+# 通用標籤
+# -----------------------------------------------------------------------------
+
+common_tags = {
+  Project      = "security-intel"
+  Environment  = "dev"
+  ManagedBy    = "terraform"
+  Team         = "security-team"
+  Owner        = "security-team"
+  Application  = "security-intelligence-platform"
+  CostCenter   = "security"
+  Backup       = "daily"
+  Monitoring   = "enabled"
+}
+
+# =============================================================================
+# 重要提醒
+# =============================================================================
+# 
+# 1. 請將 terraform.tfvars 加入 .gitignore，避免敏感資訊洩露
+# 2. 生產環境請使用更嚴格的安全設定
+# 3. 建議使用 AWS Secrets Manager 或環境變數管理敏感資訊
+# 4. 定期更新 API 金鑰和密碼
+# 5. 開發環境的設定相對寬鬆，生產環境需要更嚴格的配置
+# 
+# ============================================================================= 

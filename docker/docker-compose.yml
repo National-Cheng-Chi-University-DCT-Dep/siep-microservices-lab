@@ -1,0 +1,87 @@
+version: "3.8"
+
+services:
+  # PostgreSQL 資料庫
+  postgres:
+    image: postgres:15-alpine
+    container_name: security-intel-db
+    environment:
+      POSTGRES_DB: security_intel
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - security-intel-network
+
+  # Redis (用於快取和排程)
+  redis:
+    image: redis:7-alpine
+    container_name: security-intel-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - security-intel-network
+
+  # PostgreSQL 管理介面 (開發用)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: security-intel-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@security-intel.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - security-intel-network
+
+  # Redis 管理介面 (開發用)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: security-intel-redis-commander
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - security-intel-network
+
+  # 用於測試的輕量級 SMTP 伺服器
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: security-intel-mailhog
+    ports:
+      - "1025:1025" # SMTP 端口
+      - "8025:8025" # Web UI 端口
+    networks:
+      - security-intel-network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  security-intel-network:
+    driver: bridge

@@ -1,0 +1,279 @@
+# =============================================================================
+# Ultimate Security Intelligence Platform - 開發環境 Docker Compose 配置
+# 輕量化配置，適用於本地開發和測試
+# =============================================================================
+
+version: "3.8"
+
+# =============================================================================
+# 服務定義
+# =============================================================================
+services:
+  # ---------------------------------------------------------------------------
+  # 後端服務
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    container_name: security-intel-backend-dev
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "50051:50051"
+    environment:
+      # 資料庫設定
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=security_intel_dev
+      - DB_USER=dev_user
+      - DB_PASSWORD=dev_password
+      - DB_SSL_MODE=disable
+
+      # Redis 設定
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - REDIS_DB=0
+
+      # MQTT 設定
+      - MQTT_BROKER_HOST=mosquitto
+      - MQTT_BROKER_PORT=1883
+      - MQTT_USERNAME=dev_user
+      - MQTT_PASSWORD=dev_password
+      - MQTT_CLIENT_ID=security-intel-backend-dev
+
+      # JWT 設定
+      - JWT_SECRET=dev-jwt-secret-key-for-development-only
+      - JWT_EXPIRE_HOURS=24
+      - JWT_REFRESH_EXPIRE_HOURS=168
+
+      # 應用程式設定
+      - APP_ENV=development
+      - APP_DEBUG=true
+      - APP_PORT=8080
+      - APP_HOST=0.0.0.0
+      - GRPC_PORT=50051
+      - LOG_LEVEL=debug
+      - LOG_FORMAT=text
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000
+
+      # 監控設定
+      - METRICS_ENABLED=true
+      - METRICS_PORT=9090
+      - HEALTH_CHECK_PATH=/health
+
+      # 時區設定
+      - TZ=Asia/Taipei
+    depends_on:
+      - postgres
+      - redis
+      - mosquitto
+    networks:
+      - security-intel-dev
+    volumes:
+      - ./backend:/app
+      - ./backend/logs:/app/logs
+      - go_modules:/go/pkg/mod
+    labels:
+      - "com.security-intel.service=backend"
+      - "com.security-intel.environment=development"
+
+  # ---------------------------------------------------------------------------
+  # 前端服務
+  # ---------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    container_name: security-intel-frontend-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_WEBSOCKET_URL=ws://localhost:8080
+      - NEXT_PUBLIC_MQTT_URL=ws://localhost:1883
+      - NEXT_PUBLIC_APP_NAME=Security Intelligence Platform (Dev)
+      - NEXT_PUBLIC_APP_VERSION=dev
+      - NEXT_TELEMETRY_DISABLED=1
+      - TZ=Asia/Taipei
+    depends_on:
+      - backend
+    networks:
+      - security-intel-dev
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    labels:
+      - "com.security-intel.service=frontend"
+      - "com.security-intel.environment=development"
+
+  # ---------------------------------------------------------------------------
+  # 資料庫服務 - PostgreSQL
+  # ---------------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: security-intel-postgres-dev
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=security_intel_dev
+      - POSTGRES_USER=dev_user
+      - POSTGRES_PASSWORD=dev_password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --locale=C
+      - TZ=Asia/Taipei
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - security-intel-dev
+    ports:
+      - "5432:5432"
+    labels:
+      - "com.security-intel.service=postgres"
+      - "com.security-intel.environment=development"
+
+  # ---------------------------------------------------------------------------
+  # 快取服務 - Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: security-intel-redis-dev
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Taipei
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - security-intel-dev
+    ports:
+      - "6379:6379"
+    labels:
+      - "com.security-intel.service=redis"
+      - "com.security-intel.environment=development"
+
+  # ---------------------------------------------------------------------------
+  # 訊息佇列服務 - MQTT
+  # ---------------------------------------------------------------------------
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: security-intel-mosquitto-dev
+    restart: unless-stopped
+    volumes:
+      - ./mosquitto/config-dev:/mosquitto/config:ro
+      - mosquitto_dev_data:/mosquitto/data
+    networks:
+      - security-intel-dev
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    environment:
+      - TZ=Asia/Taipei
+    labels:
+      - "com.security-intel.service=mosquitto"
+      - "com.security-intel.environment=development"
+
+  # ---------------------------------------------------------------------------
+  # 資料庫管理工具 - pgAdmin
+  # ---------------------------------------------------------------------------
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: security-intel-pgadmin-dev
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@security-intel.local
+      - PGADMIN_DEFAULT_PASSWORD=admin
+      - PGADMIN_CONFIG_SERVER_MODE=False
+      - TZ=Asia/Taipei
+    volumes:
+      - pgadmin_dev_data:/var/lib/pgadmin
+    networks:
+      - security-intel-dev
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    labels:
+      - "com.security-intel.service=pgadmin"
+      - "com.security-intel.environment=development"
+
+  # ---------------------------------------------------------------------------
+  # Redis 管理工具
+  # ---------------------------------------------------------------------------
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: security-intel-redis-commander-dev
+    restart: unless-stopped
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+      - TZ=Asia/Taipei
+    networks:
+      - security-intel-dev
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    labels:
+      - "com.security-intel.service=redis-commander"
+      - "com.security-intel.environment=development"
+
+# =============================================================================
+# 網路設定
+# =============================================================================
+networks:
+  security-intel-dev:
+    driver: bridge
+    name: security-intel-dev
+
+# =============================================================================
+# 持久化存儲
+# =============================================================================
+volumes:
+  postgres_dev_data:
+    driver: local
+    name: security-intel-postgres-dev-data
+  redis_dev_data:
+    driver: local
+    name: security-intel-redis-dev-data
+  mosquitto_dev_data:
+    driver: local
+    name: security-intel-mosquitto-dev-data
+  pgadmin_dev_data:
+    driver: local
+    name: security-intel-pgadmin-dev-data
+  go_modules:
+    driver: local
+    name: security-intel-go-modules
+# =============================================================================
+# 使用說明
+# =============================================================================
+# 1. 啟動開發環境：
+#    docker-compose -f docker-compose.dev.yml up -d
+#
+# 2. 查看服務狀態：
+#    docker-compose -f docker-compose.dev.yml ps
+#
+# 3. 查看日誌：
+#    docker-compose -f docker-compose.dev.yml logs -f
+#
+# 4. 進入容器：
+#    docker-compose -f docker-compose.dev.yml exec backend sh
+#    docker-compose -f docker-compose.dev.yml exec frontend sh
+#
+# 5. 停止服務：
+#    docker-compose -f docker-compose.dev.yml down
+#
+# 服務地址：
+# - 前端：http://localhost:3000
+# - 後端 API：http://localhost:8080
+# - gRPC：localhost:50051
+# - PostgreSQL：localhost:5432
+# - Redis：localhost:6379
+# - MQTT：localhost:1883
+# - pgAdmin：http://localhost:5050
+# - Redis Commander：http://localhost:8081
+# =============================================================================
