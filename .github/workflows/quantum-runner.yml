@@ -1,0 +1,239 @@
+name: 量子任務執行器
+
+on:
+  # 每10分鐘執行一次
+  schedule:
+    - cron: '*/10 * * * *'
+
+  # 允許手動觸發
+  workflow_dispatch:
+    inputs:
+      debug_enabled:
+        description: '開啟除錯模式'
+        type: boolean
+        default: false
+      run_once:
+        description: '只執行一個任務'
+        type: boolean
+        default: false
+
+jobs:
+  process-quantum-jobs:
+    name: 處理量子任務佇列
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 檢出程式碼
+        uses: actions/checkout@v3
+        
+      - name: 設定 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+          cache-dependency-path: 'services/quantum-predictor/requirements.txt'
+          
+      - name: 安裝依賴
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r services/quantum-predictor/requirements.txt
+          pip install requests pyyaml
+      
+      - name: 顯示除錯資訊
+        if: ${{ inputs.debug_enabled }}
+        run: |
+          echo "執行量子任務處理器"
+          echo "API URL: ${{ secrets.QUANTUM_API_URL }}"
+          echo "Worker ID: quantum-github-worker"
+          python -V
+          
+      - name: 設定 IBM Quantum API Token
+        if: ${{ env.USE_REAL_DEVICE }}
+        run: |
+          echo "IBMQ_API_KEY=${{ secrets.IBMQ_API_KEY }}" >> $GITHUB_ENV
+          echo "IBM Quantum 設定完成"
+      
+      - name: 處理量子任務
+        id: process_jobs
+        env:
+          API_URL: ${{ secrets.QUANTUM_API_URL }}
+          API_KEY: ${{ secrets.QUANTUM_API_KEY }}
+          WORKER_ID: quantum-github-worker
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          USE_REAL_DEVICE: ${{ secrets.USE_REAL_DEVICE }}
+          RUN_ONCE: ${{ inputs.run_once }}
+        run: |
+          python - <<EOF
+          import os
+          import json
+          import time
+          import requests
+          import sys
+          import yaml
+          
+          # 環境變數
+          API_URL = os.environ.get("API_URL", "http://localhost:8080/api/v1")
+          API_KEY = os.environ.get("API_KEY", "")
+          WORKER_ID = os.environ.get("WORKER_ID", "quantum-github-worker")
+          RUN_ONCE = os.environ.get("RUN_ONCE", "false").lower() == "true"
+          
+          # 設定 API 請求頭
+          headers = {
+              "Content-Type": "application/json",
+              "X-API-KEY": API_KEY
+          }
+          
+          def get_next_job():
+              """獲取下一個待處理的任務"""
+              try:
+                  url = f"{API_URL}/internal/quantum-jobs/next"
+                  data = {
+                      "worker_id": WORKER_ID,
+                      "secret": API_KEY
+                  }
+                  response = requests.post(url, json=data, headers=headers)
+                  
+                  if response.status_code == 200:
+                      return response.json()
+                  elif response.status_code == 404:
+                      print("沒有待處理的任務")
+                      return None
+                  else:
+                      print(f"獲取任務失敗: {response.status_code} - {response.text}")
+                      return None
+              except Exception as e:
+                  print(f"獲取任務時發生錯誤: {str(e)}")
+                  return None
+          
+          def process_job(job_data):
+              """處理量子任務"""
+              try:
+                  job_id = job_data["job_id"]
+                  input_params = job_data["input_params"]
+                  
+                  print(f"處理任務 {job_id}")
+                  print(f"輸入參數: {json.dumps(input_params, indent=2)}")
+                  
+                  # 準備輸入文件
+                  input_file = "temp_input.json"
+                  with open(input_file, "w") as f:
+                      json.dump(input_params, f)
+                  
+                  # 準備輸出文件
+                  output_file = "temp_output.json"
+                  
+                  # 運行量子預測服務
+                  command = f"python services/quantum-predictor/main.py --input {input_file} --output {output_file}"
+                  if os.environ.get("USE_REAL_DEVICE", "false").lower() == "true":
+                      command += " --real-device"
+                  
+                  print(f"執行命令: {command}")
+                  start_time = time.time()
+                  exit_code = os.system(command)
+                  execution_time = int(time.time() - start_time)
+                  
+                  if exit_code != 0:
+                      print(f"任務執行失敗，退出碼: {exit_code}")
+                      mark_job_failed(job_id, f"處理任務時失敗，退出碼: {exit_code}", execution_time)
+                      return False
+                  
+                  # 讀取處理結果
+                  if not os.path.exists(output_file):
+                      print(f"找不到輸出文件: {output_file}")
+                      mark_job_failed(job_id, "找不到處理結果文件", execution_time)
+                      return False
+                  
+                  with open(output_file, "r") as f:
+                      results = json.load(f)
+                  
+                  # 清理臨時文件
+                  os.remove(input_file)
+                  os.remove(output_file)
+                  
+                  # 標記任務為完成
+                  confidence_score = results.get("confidence", 50.0)
+                  is_malicious = results.get("is_malicious", False)
+                  
+                  mark_job_completed(job_id, results, confidence_score, is_malicious, execution_time)
+                  return True
+                  
+              except Exception as e:
+                  print(f"處理任務時發生錯誤: {str(e)}")
+                  mark_job_failed(job_id, f"處理任務時發生錯誤: {str(e)}", 0)
+                  return False
+          
+          def mark_job_completed(job_id, results, confidence_score, is_malicious, execution_time):
+              """標記任務為完成"""
+              try:
+                  url = f"{API_URL}/internal/quantum-jobs/complete"
+                  data = {
+                      "job_id": job_id,
+                      "results": results,
+                      "confidence_score": confidence_score,
+                      "is_malicious": is_malicious,
+                      "execution_time_seconds": execution_time,
+                      "quantum_backend": results.get("backend", "simulator")
+                  }
+                  response = requests.post(url, json=data, headers=headers)
+                  
+                  if response.status_code == 200:
+                      print(f"任務 {job_id} 已標記為完成")
+                      return True
+                  else:
+                      print(f"標記任務為完成失敗: {response.status_code} - {response.text}")
+                      return False
+              except Exception as e:
+                  print(f"標記任務為完成時發生錯誤: {str(e)}")
+                  return False
+          
+          def mark_job_failed(job_id, error_message, execution_time):
+              """標記任務為失敗"""
+              try:
+                  url = f"{API_URL}/internal/quantum-jobs/fail"
+                  data = {
+                      "job_id": job_id,
+                      "error_message": error_message,
+                      "execution_time_seconds": execution_time
+                  }
+                  response = requests.post(url, json=data, headers=headers)
+                  
+                  if response.status_code == 200:
+                      print(f"任務 {job_id} 已標記為失敗: {error_message}")
+                      return True
+                  else:
+                      print(f"標記任務為失敗失敗: {response.status_code} - {response.text}")
+                      return False
+              except Exception as e:
+                  print(f"標記任務為失敗時發生錯誤: {str(e)}")
+                  return False
+          
+          # 主程序
+          max_jobs = 1 if RUN_ONCE else 5  # 每次執行最多處理5個任務
+          processed_count = 0
+          
+          for _ in range(max_jobs):
+              job = get_next_job()
+              if job is None:
+                  # 沒有更多任務
+                  break
+              
+              success = process_job(job)
+              processed_count += 1 if success else 0
+              
+              # 短暫等待，避免 API 請求過於頻繁
+              time.sleep(2)
+          
+          # 設定輸出變數
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              print(f"processed_count={processed_count}", file=f)
+          
+          print(f"已處理 {processed_count} 個任務")
+          EOF
+          
+      - name: 處理結果
+        run: |
+          if [ "${{ steps.process_jobs.outputs.processed_count }}" -gt "0" ]; then
+            echo "成功處理了 ${{ steps.process_jobs.outputs.processed_count }} 個量子任務"
+          else
+            echo "沒有處理任何任務"
+          fi
