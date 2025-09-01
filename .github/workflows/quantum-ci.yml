@@ -50,7 +50,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.Container_Token }}
         
       - name: 建置與推送 Docker 鏡像
         uses: docker/build-push-action@v4

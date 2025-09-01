@@ -40,7 +40,7 @@ type APIKeyResponse struct {
 	ID          uuid.UUID  `json:"id" example:"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"`
 	Name        string     `json:"name" example:"My API Key"`
 	Description string     `json:"description,omitempty" example:"For integration with my app"`
-	Key         string     `json:"key,omitempty" example:"sk_live_1234567890abcdef"`
+	Key         string     `json:"key,omitempty" example:"sk_live_************************"`
 	Prefix      string     `json:"prefix" example:"sk_live_12345"`
 	LastUsed    *time.Time `json:"last_used,omitempty" example:"2023-06-01T15:30:45Z"`
 	ExpiresAt   *time.Time `json:"expires_at,omitempty" example:"2024-01-01T00:00:00Z"`
