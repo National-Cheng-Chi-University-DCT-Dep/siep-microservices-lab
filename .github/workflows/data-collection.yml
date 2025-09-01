@@ -1,0 +1,55 @@
+name: 資安情報蒐集排程任務
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # 每6小時執行一次
+  workflow_dispatch:  # 允許手動觸發
+
+jobs:
+  collect-hibp-data:
+    name: HIBP 資料蒐集
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 觸發 HIBP 資料蒐集 API
+        run: |
+          curl -X POST ${{ secrets.COLLECTOR_API_URL }}/api/v1/collector/hibp/run \
+            -H "Authorization: Bearer ${{ secrets.COLLECTOR_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"force": true, "source": "github_action"}'
+      
+      - name: 確認任務狀態
+        run: |
+          echo "HIBP 資料蒐集任務已觸發"
+          
+  collect-abuseipdb-data:
+    name: AbuseIPDB 資料蒐集
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 觸發 AbuseIPDB 資料蒐集 API
+        run: |
+          curl -X POST ${{ secrets.COLLECTOR_API_URL }}/api/v1/collector/abuseipdb/run \
+            -H "Authorization: Bearer ${{ secrets.COLLECTOR_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"force": true, "source": "github_action"}'
+      
+      - name: 確認任務狀態
+        run: |
+          echo "AbuseIPDB 資料蒐集任務已觸發"
+          
+  collect-cve-data:
+    name: CVE 資料蒐集
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 觸發 CVE 資料蒐集 API
+        run: |
+          curl -X POST ${{ secrets.COLLECTOR_API_URL }}/api/v1/collector/cve/run \
+            -H "Authorization: Bearer ${{ secrets.COLLECTOR_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"force": true, "source": "github_action"}'
+      
+      - name: 確認任務狀態
+        run: |
+          echo "CVE 資料蒐集任務已觸發"
