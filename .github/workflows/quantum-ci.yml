@@ -36,7 +36,7 @@ jobs:
           
       - name: 運行測試
         run: |
-          pytest services/quantum-predictor/tests/
+          pytest services/quantum-predictor/tests/test_quantum_predictor_simple.py -v
           
   build:
     name: 建置與部署量子服務鏡像

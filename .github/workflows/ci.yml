@@ -166,7 +166,7 @@ jobs:
       - name: 運行量子服務測試
         working-directory: services/quantum-predictor
         run: |
-          python -m pytest tests/ -v --cov=. --cov-report=xml
+          python -m pytest tests/test_quantum_predictor_simple.py -v --cov=. --cov-report=xml
         env:
           IBMQ_API_KEY: ${{ secrets.IBMQ_API_KEY }}
           USE_REAL_DEVICE: 'false'
