@@ -169,16 +169,16 @@ output "subnet_groups" {
 output "network_summary" {
   description = "網路配置摘要"
   value = {
-    vpc_id               = aws_vpc.main.id
-    vpc_cidr             = aws_vpc.main.cidr_block
-    public_subnets       = length(aws_subnet.public)
-    private_subnets      = length(aws_subnet.private)
-    availability_zones   = length(var.availability_zones)
-    nat_gateways        = length(aws_nat_gateway.main)
-    internet_gateway    = aws_internet_gateway.main.id
-    vpc_flow_logs       = var.enable_vpc_flow_logs
-    s3_endpoint         = var.enable_s3_endpoint
-    network_acls        = var.enable_network_acls
+    vpc_id             = aws_vpc.main.id
+    vpc_cidr           = aws_vpc.main.cidr_block
+    public_subnets     = length(aws_subnet.public)
+    private_subnets    = length(aws_subnet.private)
+    availability_zones = length(var.availability_zones)
+    nat_gateways       = length(aws_nat_gateway.main)
+    internet_gateway   = aws_internet_gateway.main.id
+    vpc_flow_logs      = var.enable_vpc_flow_logs
+    s3_endpoint        = var.enable_s3_endpoint
+    network_acls       = var.enable_network_acls
   }
 }
 

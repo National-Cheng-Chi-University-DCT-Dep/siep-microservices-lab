@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowPathIcon, CheckCircleIcon, ExclamationCircleIcon, ClockIcon, PlayIcon } from '@heroicons/react/24/outline';
 import JobStatusTracker from '@/components/JobStatusTracker';
@@ -42,32 +42,33 @@ export default function QuantumJobDetail({ params }: { params: { id: string } })
   
   const jobId = params.id;
   
+  // 獲取任務詳情
+  const fetchJobDetail = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/v1/quantum-jobs/${jobId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error('無法獲取任務詳情');
+      }
+      
+      const data = await response.json();
+      setJob(data);
+      setError(null);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : '獲取任務詳情失敗';
+      setError(errorMessage);
+      console.error('獲取任務失敗:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [jobId]);
+
   // 輪詢任務狀態
   useEffect(() => {
-    const fetchJobDetail = async () => {
-      try {
-        const response = await fetch(`/api/v1/quantum-jobs/${jobId}`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error('無法獲取任務詳情');
-        }
-        
-        const data = await response.json();
-        setJob(data);
-        setError(null);
-      } catch (err: unknown) {
-        const errorMessage = err instanceof Error ? err.message : '獲取任務詳情失敗';
-        setError(errorMessage);
-        console.error('獲取任務失敗:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchJobDetail();
     
     // 如果任務尚未完成，設定輪詢
@@ -78,7 +79,7 @@ export default function QuantumJobDetail({ params }: { params: { id: string } })
     }, 5000); // 每5秒更新一次
     
     return () => clearInterval(intervalId);
-  }, [jobId]);
+  }, [jobId, job, fetchJobDetail]);
   
   // 返回任務列表
   const handleBack = () => {

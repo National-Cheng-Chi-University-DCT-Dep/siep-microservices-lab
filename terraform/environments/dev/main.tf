@@ -10,18 +10,18 @@
 module "vpc" {
   source = "../../modules/vpc"
 
-  project_name             = var.project_name
-  environment             = var.environment
-  aws_region              = var.aws_region
-  common_tags             = var.common_tags
-  vpc_cidr                = var.vpc_cidr
-  availability_zones      = var.availability_zones
-  public_subnet_cidrs     = var.public_subnet_cidrs
-  private_subnet_cidrs    = var.private_subnet_cidrs
-  enable_vpc_flow_logs    = true
-  enable_s3_endpoint      = true
-  enable_network_acls     = false
-  log_retention_days      = var.log_retention_in_days
+  project_name         = var.project_name
+  environment          = var.environment
+  aws_region           = var.aws_region
+  common_tags          = var.common_tags
+  vpc_cidr             = var.vpc_cidr
+  availability_zones   = var.availability_zones
+  public_subnet_cidrs  = var.public_subnet_cidrs
+  private_subnet_cidrs = var.private_subnet_cidrs
+  enable_vpc_flow_logs = true
+  enable_s3_endpoint   = true
+  enable_network_acls  = false
+  log_retention_days   = var.log_retention_in_days
 }
 
 # -----------------------------------------------------------------------------
@@ -31,7 +31,7 @@ module "vpc" {
 module "security" {
   source = "../../modules/security"
 
-  project_name                    = var.project_name
+  project_name                   = var.project_name
   environment                    = var.environment
   aws_region                     = var.aws_region
   common_tags                    = var.common_tags
@@ -60,7 +60,7 @@ module "security" {
 module "rds" {
   source = "../../modules/rds"
 
-  project_name                = var.project_name
+  project_name               = var.project_name
   environment                = var.environment
   common_tags                = var.common_tags
   vpc_id                     = module.vpc.vpc_id
@@ -75,7 +75,7 @@ module "rds" {
   db_backup_retention_period = var.db_backup_retention_period
   db_skip_final_snapshot     = var.db_skip_final_snapshot
   enable_deletion_protection = var.enable_deletion_protection
-  create_read_replica        = false  # 開發環境不需要讀取副本
+  create_read_replica        = false # 開發環境不需要讀取副本
   log_retention_days         = var.log_retention_in_days
   sns_topic_arn              = module.security.security_alerts_topic_arn
 }
@@ -87,35 +87,35 @@ module "rds" {
 module "ecs" {
   source = "../../modules/ecs"
 
-  project_name                     = var.project_name
-  environment                     = var.environment
-  aws_region                      = var.aws_region
-  common_tags                     = var.common_tags
-  vpc_id                          = module.vpc.vpc_id
-  public_subnet_ids               = module.vpc.public_subnet_ids
-  private_subnet_ids              = module.vpc.private_subnet_ids
-  allowed_cidr_blocks             = var.allowed_cidr_blocks
-  app_image                       = var.backend_image_tag
-  container_port                  = var.ecs_container_port
-  task_cpu                        = var.ecs_task_cpu
-  task_memory                     = var.ecs_task_memory
-  desired_count                   = var.ecs_desired_count
-  alb_health_check_path           = var.alb_health_check_path
-  alb_health_check_interval       = var.alb_health_check_interval
-  alb_health_check_timeout        = var.alb_health_check_timeout
-  alb_healthy_threshold           = var.alb_healthy_threshold
-  alb_unhealthy_threshold         = var.alb_unhealthy_threshold
-  enable_auto_scaling             = true
-  min_capacity                    = 1
-  max_capacity                    = 3  # 開發環境限制較小的擴展
-  cpu_target_value                = 70
-  memory_target_value             = 80
-  enable_service_discovery        = false  # 開發環境暫時不啟用
-  log_retention_days              = var.log_retention_in_days
-  sns_topic_arn                   = module.security.security_alerts_topic_arn
-  enable_deletion_protection      = var.enable_deletion_protection
-  secrets_manager_arns            = [module.security.app_secrets_arn]
-  
+  project_name               = var.project_name
+  environment                = var.environment
+  aws_region                 = var.aws_region
+  common_tags                = var.common_tags
+  vpc_id                     = module.vpc.vpc_id
+  public_subnet_ids          = module.vpc.public_subnet_ids
+  private_subnet_ids         = module.vpc.private_subnet_ids
+  allowed_cidr_blocks        = var.allowed_cidr_blocks
+  app_image                  = var.backend_image_tag
+  container_port             = var.ecs_container_port
+  task_cpu                   = var.ecs_task_cpu
+  task_memory                = var.ecs_task_memory
+  desired_count              = var.ecs_desired_count
+  alb_health_check_path      = var.alb_health_check_path
+  alb_health_check_interval  = var.alb_health_check_interval
+  alb_health_check_timeout   = var.alb_health_check_timeout
+  alb_healthy_threshold      = var.alb_healthy_threshold
+  alb_unhealthy_threshold    = var.alb_unhealthy_threshold
+  enable_auto_scaling        = true
+  min_capacity               = 1
+  max_capacity               = 3 # 開發環境限制較小的擴展
+  cpu_target_value           = 70
+  memory_target_value        = 80
+  enable_service_discovery   = false # 開發環境暫時不啟用
+  log_retention_days         = var.log_retention_in_days
+  sns_topic_arn              = module.security.security_alerts_topic_arn
+  enable_deletion_protection = var.enable_deletion_protection
+  secrets_manager_arns       = [module.security.app_secrets_arn]
+
   # 環境變數配置
   environment_variables = [
     {
@@ -140,7 +140,7 @@ module "ecs" {
     },
     {
       name  = "REDIS_HOST"
-      value = "localhost"  # 暫時使用本地 Redis
+      value = "localhost" # 暫時使用本地 Redis
     },
     {
       name  = "REDIS_PORT"
@@ -295,7 +295,7 @@ locals {
     Terraform   = "true"
     Repository  = "security-intelligence-platform"
   }
-  
+
   # 合併所有標籤
   all_tags = merge(var.common_tags, local.environment_tags)
 }

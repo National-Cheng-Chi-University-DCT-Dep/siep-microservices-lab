@@ -195,17 +195,17 @@ output "connection_info" {
 output "deployment_info" {
   description = "部署資訊摘要"
   value = {
-    environment           = var.environment
-    aws_region           = var.aws_region
-    vpc_id               = module.vpc.vpc_id
-    ecs_cluster_name     = module.ecs.ecs_cluster_name
-    ecs_service_name     = module.ecs.ecs_service_name
-    database_instance_id = module.rds.db_instance_id
-    kms_key_id           = module.security.kms_key_id
-    waf_enabled          = var.enable_waf
-    ssl_enabled          = var.enable_ssl
-    auto_scaling_enabled = true
-    monitoring_enabled   = true
+    environment             = var.environment
+    aws_region              = var.aws_region
+    vpc_id                  = module.vpc.vpc_id
+    ecs_cluster_name        = module.ecs.ecs_cluster_name
+    ecs_service_name        = module.ecs.ecs_service_name
+    database_instance_id    = module.rds.db_instance_id
+    kms_key_id              = module.security.kms_key_id
+    waf_enabled             = var.enable_waf
+    ssl_enabled             = var.enable_ssl
+    auto_scaling_enabled    = true
+    monitoring_enabled      = true
     security_alerts_enabled = var.enable_security_alerts
   }
 }

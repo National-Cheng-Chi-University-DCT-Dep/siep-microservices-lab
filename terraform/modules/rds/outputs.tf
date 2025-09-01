@@ -216,20 +216,20 @@ output "connection_info" {
 output "database_summary" {
   description = "資料庫配置摘要"
   value = {
-    instance_id       = aws_db_instance.main.id
-    engine            = aws_db_instance.main.engine
-    engine_version    = aws_db_instance.main.engine_version
-    instance_class    = aws_db_instance.main.instance_class
-    allocated_storage = aws_db_instance.main.allocated_storage
-    storage_encrypted = aws_db_instance.main.storage_encrypted
-    multi_az         = aws_db_instance.main.multi_az
-    backup_retention = aws_db_instance.main.backup_retention_period
-    maintenance_window = aws_db_instance.main.maintenance_window
-    backup_window     = aws_db_instance.main.backup_window
-    monitoring_enabled = aws_db_instance.main.monitoring_interval > 0
+    instance_id          = aws_db_instance.main.id
+    engine               = aws_db_instance.main.engine
+    engine_version       = aws_db_instance.main.engine_version
+    instance_class       = aws_db_instance.main.instance_class
+    allocated_storage    = aws_db_instance.main.allocated_storage
+    storage_encrypted    = aws_db_instance.main.storage_encrypted
+    multi_az             = aws_db_instance.main.multi_az
+    backup_retention     = aws_db_instance.main.backup_retention_period
+    maintenance_window   = aws_db_instance.main.maintenance_window
+    backup_window        = aws_db_instance.main.backup_window
+    monitoring_enabled   = aws_db_instance.main.monitoring_interval > 0
     performance_insights = aws_db_instance.main.performance_insights_enabled
-    deletion_protection = aws_db_instance.main.deletion_protection
-    read_replica_count = var.create_read_replica ? 1 : 0
+    deletion_protection  = aws_db_instance.main.deletion_protection
+    read_replica_count   = var.create_read_replica ? 1 : 0
   }
 }
 

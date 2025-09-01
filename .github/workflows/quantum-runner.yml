@@ -60,6 +60,7 @@ jobs:
           API_KEY: ${{ secrets.QUANTUM_API_KEY }}
           WORKER_ID: quantum-github-worker
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
           USE_REAL_DEVICE: ${{ secrets.USE_REAL_DEVICE }}
           RUN_ONCE: ${{ inputs.run_once }}
         run: |
@@ -122,15 +123,36 @@ jobs:
                   # 準備輸出文件
                   output_file = "temp_output.json"
                   
-                  # 運行量子預測服務
-                  command = f"python services/quantum-predictor/main.py --input {input_file} --output {output_file}"
-                  if os.environ.get("USE_REAL_DEVICE", "false").lower() == "true":
-                      command += " --real-device"
-                  
-                  print(f"執行命令: {command}")
-                  start_time = time.time()
-                  exit_code = os.system(command)
-                  execution_time = int(time.time() - start_time)
+                            # 運行量子預測服務
+          # 使用 GitHub Container Registry 的鏡像
+          # 格式: ghcr.io/{owner}/quantum-predictor:latest
+          docker_image = f"ghcr.io/{os.environ.get('GITHUB_REPOSITORY_OWNER', 'lipeichen')}/quantum-predictor:latest"
+          
+          # 拉取最新的 Docker 鏡像
+          pull_command = f"docker pull {docker_image}"
+          print(f"拉取 Docker 鏡像: {pull_command}")
+          pull_result = os.system(pull_command)
+          if pull_result != 0:
+              print(f"拉取 Docker 鏡像失敗，使用本地 Python 執行")
+              # 如果拉取失敗，回退到本地 Python 執行
+              command = f"python services/quantum-predictor/main.py --input {input_file} --output {output_file}"
+              if os.environ.get("USE_REAL_DEVICE", "false").lower() == "true":
+                  command += " --real-device"
+              print(f"執行本地命令: {command}")
+              start_time = time.time()
+              exit_code = os.system(command)
+              execution_time = int(time.time() - start_time)
+          else:
+          
+          # 使用 Docker 運行量子預測服務
+          docker_command = f"docker run --rm -v $(pwd)/{input_file}:/app/input.json -v $(pwd)/{output_file}:/app/output.json {docker_image} python main.py --input /app/input.json --output /app/output.json"
+          if os.environ.get("USE_REAL_DEVICE", "false").lower() == "true":
+              docker_command += " --real-device"
+          
+          print(f"執行 Docker 命令: {docker_command}")
+          start_time = time.time()
+          exit_code = os.system(docker_command)
+          execution_time = int(time.time() - start_time)
                   
                   if exit_code != 0:
                       print(f"任務執行失敗，退出碼: {exit_code}")
