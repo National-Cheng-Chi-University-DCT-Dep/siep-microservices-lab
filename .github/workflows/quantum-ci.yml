@@ -2,13 +2,15 @@ name: 量子服務 CI/CD
 
 on:
   push:
+    branches: [ main ]
     paths:
       - 'services/quantum-predictor/**'
       - '.github/workflows/quantum-ci.yml'
   pull_request:
+    branches: [ main ]
     paths:
       - 'services/quantum-predictor/**'
-
+   
 jobs:
   test:
     name: 測試量子服務
@@ -34,7 +36,7 @@ jobs:
           
       - name: 運行測試
         run: |
-          pytest quantum-service/tests/
+          pytest services/quantum-predictor/tests/
           
   build:
     name: 建置與部署量子服務鏡像
