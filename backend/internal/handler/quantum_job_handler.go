@@ -6,9 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 
-	"siep-microservices-lab/backend/internal/dto"
-	"siep-microservices-lab/backend/internal/service"
-	"siep-microservices-lab/backend/internal/vo"
+	"github.com/lipeichen/Ultimate-Security-Intelligence-Platform/backend/internal/dto"
+	"github.com/lipeichen/Ultimate-Security-Intelligence-Platform/backend/internal/service"
+	"github.com/lipeichen/Ultimate-Security-Intelligence-Platform/backend/internal/vo"
 )
 
 // QuantumJobHandler 處理量子任務相關請求

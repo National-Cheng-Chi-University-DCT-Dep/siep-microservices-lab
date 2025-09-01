@@ -76,4 +76,79 @@ type OAuthProvidersResponse struct {
 type EmailSentResponse struct {
 	Success bool   `json:"success" example:"true"`
 	Message string `json:"message" example:"Verification email sent successfully"`
+}
+
+// 註冊回應
+type RegisterResponse struct {
+	Success bool   `json:"success" example:"true"`
+	Message string `json:"message" example:"User registered successfully"`
+	UserID  uuid.UUID `json:"user_id" example:"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"`
+}
+
+// 登入回應
+type LoginResponse struct {
+	Success bool   `json:"success" example:"true"`
+	Message string `json:"message" example:"Login successful"`
+	AuthResponse
+}
+
+// 刷新 Token 回應
+type RefreshTokenResponse struct {
+	Success bool   `json:"success" example:"true"`
+	Message string `json:"message" example:"Token refreshed successfully"`
+	AuthResponse
+}
+
+// 登出回應
+type LogoutResponse struct {
+	Success bool   `json:"success" example:"true"`
+	Message string `json:"message" example:"Logout successful"`
+}
+
+// 更改密碼回應
+type ChangePasswordResponse struct {
+	Success bool   `json:"success" example:"true"`
+	Message string `json:"message" example:"Password changed successfully"`
+}
+
+// 重設密碼回應
+type ResetPasswordResponse struct {
+	Success bool   `json:"success" example:"true"`
+	Message string `json:"message" example:"Password reset email sent"`
+}
+
+// 確認重設密碼回應
+type ConfirmResetPasswordResponse struct {
+	Success bool   `json:"success" example:"true"`
+	Message string `json:"message" example:"Password reset confirmed"`
+}
+
+// 獲取使用者回應
+type GetUserResponse struct {
+	Success bool   `json:"success" example:"true"`
+	Message string `json:"message" example:"User retrieved successfully"`
+	User    UserProfileResponse `json:"user"`
+}
+
+// 更新個人資料回應
+type UpdateProfileResponse struct {
+	Success bool   `json:"success" example:"true"`
+	Message string `json:"message" example:"Profile updated successfully"`
+	User    UserProfileResponse `json:"user"`
+}
+
+// 認證 Token 回應
+type AuthTokenResponse struct {
+	AccessToken  string    `json:"access_token" example:"eyJhbGciOiJIUzI1NiIsIn..."`
+	RefreshToken string    `json:"refresh_token" example:"eyJhbGciOiJIUzI1NiIsIn..."`
+	ExpiresIn    int       `json:"expires_in" example:"3600"`
+	TokenType    string    `json:"token_type" example:"Bearer"`
+	ExpiresAt    time.Time `json:"expires_at" example:"2023-07-01T00:00:00Z"`
+	User         UserProfileResponse `json:"user"`
+}
+
+// 擴展使用者 VO
+type ExtendedUserVO struct {
+	UserProfileResponse
+	APIKeys []APIKeyResponse `json:"api_keys,omitempty"`
 } 

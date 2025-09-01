@@ -35,28 +35,7 @@ const (
 	SeverityCritical SeverityLevel = "critical"
 )
 
-// JSONB 自訂 JSONB 類型
-type JSONB map[string]interface{}
-
-// Value 實作 driver.Valuer 介面
-func (j JSONB) Value() (driver.Value, error) {
-	return json.Marshal(j)
-}
-
-// Scan 實作 sql.Scanner 介面
-func (j *JSONB) Scan(value interface{}) error {
-	if value == nil {
-		*j = make(map[string]interface{})
-		return nil
-	}
-	
-	bytes, ok := value.([]byte)
-	if !ok {
-		return errors.New("type assertion to []byte failed")
-	}
-	
-	return json.Unmarshal(bytes, j)
-}
+// 使用共享的 JSONB 類型，定義在 quantum_job.go 中
 
 // StringArray 自訂字串陣列類型
 type StringArray []string

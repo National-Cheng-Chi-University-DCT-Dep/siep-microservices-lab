@@ -30,8 +30,8 @@ interface QuantumJob {
   is_malicious?: boolean;
   results?: JobResult;
   error_message?: string;
-  input_params_summary?: any;
-  results_summary?: any;
+  input_params_summary?: Record<string, unknown>;
+  results_summary?: Record<string, unknown>;
 }
 
 export default function QuantumJobDetail({ params }: { params: { id: string } }) {
@@ -59,8 +59,9 @@ export default function QuantumJobDetail({ params }: { params: { id: string } })
         const data = await response.json();
         setJob(data);
         setError(null);
-      } catch (err: any) {
-        setError(err.message || '獲取任務詳情失敗');
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : '獲取任務詳情失敗';
+        setError(errorMessage);
         console.error('獲取任務失敗:', err);
       } finally {
         setLoading(false);
@@ -77,7 +78,7 @@ export default function QuantumJobDetail({ params }: { params: { id: string } })
     }, 5000); // 每5秒更新一次
     
     return () => clearInterval(intervalId);
-  }, [jobId, job?.status]);
+  }, [jobId]);
   
   // 返回任務列表
   const handleBack = () => {
@@ -291,12 +292,11 @@ export default function QuantumJobDetail({ params }: { params: { id: string } })
                       <div
                         className={`h-2.5 rounded-full ${
                           job.confidence_score && job.confidence_score > 75 
-                            ? 'bg-green-500'
+                            ? 'w-[75%] bg-green-500'
                             : job.confidence_score && job.confidence_score > 50
-                              ? 'bg-yellow-500'
-                              : 'bg-red-500'
+                              ? 'w-[50%] bg-yellow-500'
+                              : 'w-[25%] bg-red-500'
                         }`}
-                        style={{ width: `${job.confidence_score || 0}%` }}
                       />
                     </div>
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
