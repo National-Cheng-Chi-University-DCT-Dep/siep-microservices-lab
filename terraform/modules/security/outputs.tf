@@ -204,18 +204,18 @@ output "vpc_flow_logs_role_arn" {
 output "security_summary" {
   description = "安全性配置摘要"
   value = {
-    kms_encryption_enabled      = true
-    secrets_manager_enabled     = true
-    waf_enabled                 = var.enable_waf
-    ssl_enabled                 = var.enable_ssl
-    security_alerts_enabled     = var.enable_security_alerts
-    vpc_flow_logs_enabled       = var.enable_vpc_flow_logs
+    kms_encryption_enabled     = true
+    secrets_manager_enabled    = true
+    waf_enabled               = var.enable_waf
+    ssl_enabled               = var.enable_ssl
+    security_alerts_enabled   = var.enable_security_alerts
+    vpc_flow_logs_enabled     = var.enable_vpc_flow_logs
     security_monitoring_enabled = var.enable_security_monitoring
     iam_roles_created = {
       ecs_task_execution_role = var.create_ecs_task_execution_role
-      ecs_task_role           = var.create_ecs_task_role
+      ecs_task_role          = var.create_ecs_task_role
     }
-    security_groups_count   = 3
+    security_groups_count = 3
     cloudwatch_alarms_count = (var.enable_waf ? 1 : 0) + (var.enable_security_monitoring ? 1 : 0)
   }
 }

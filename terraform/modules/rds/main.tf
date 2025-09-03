@@ -83,7 +83,7 @@ resource "aws_db_parameter_group" "main" {
 
   parameter {
     name  = "log_min_duration_statement"
-    value = "1000" # 記錄執行超過 1 秒的查詢
+    value = "1000"  # 記錄執行超過 1 秒的查詢
   }
 
   parameter {
@@ -170,7 +170,7 @@ resource "aws_db_instance" "main" {
   max_allocated_storage = var.db_max_allocated_storage
   storage_type          = "gp3"
   storage_encrypted     = true
-  kms_key_id            = aws_kms_key.rds.arn
+  kms_key_id           = aws_kms_key.rds.arn
 
   # 資料庫設定
   db_name  = var.db_database_name
@@ -187,20 +187,20 @@ resource "aws_db_instance" "main" {
   parameter_group_name = aws_db_parameter_group.main.name
 
   # 備份設定
-  backup_retention_period   = var.db_backup_retention_period
-  backup_window             = "03:00-04:00"
-  maintenance_window        = "sun:04:00-sun:05:00"
-  copy_tags_to_snapshot     = true
-  skip_final_snapshot       = var.db_skip_final_snapshot
+  backup_retention_period = var.db_backup_retention_period
+  backup_window          = "03:00-04:00"
+  maintenance_window     = "sun:04:00-sun:05:00"
+  copy_tags_to_snapshot  = true
+  skip_final_snapshot    = var.db_skip_final_snapshot
   final_snapshot_identifier = var.db_skip_final_snapshot ? null : "${var.project_name}-${var.environment}-final-snapshot"
 
   # 監控設定
-  monitoring_interval             = 60
-  monitoring_role_arn             = aws_iam_role.rds_monitoring.arn
+  monitoring_interval = 60
+  monitoring_role_arn = aws_iam_role.rds_monitoring.arn
   enabled_cloudwatch_logs_exports = ["postgresql"]
 
   # 效能洞察
-  performance_insights_enabled          = true
+  performance_insights_enabled = true
   performance_insights_retention_period = 7
 
   # 刪除保護
@@ -225,6 +225,7 @@ resource "aws_db_instance" "main" {
 resource "aws_kms_key" "rds" {
   description             = "KMS key for RDS encryption"
   deletion_window_in_days = 7
+  enable_key_rotation = true
 
   tags = merge(local.common_tags, {
     Name = "${var.project_name}-${var.environment}-rds-kms"
@@ -269,7 +270,9 @@ resource "aws_iam_role_policy_attachment" "rds_monitoring" {
 # -----------------------------------------------------------------------------
 
 resource "aws_cloudwatch_log_group" "postgresql" {
-  name              = "/aws/rds/instance/${var.project_name}-${var.environment}-postgres/postgresql"
+  name              = "/aws/rds/instance/${var.project_name}
+  kms_key_id = aws_kms_key.main.arn
+-${var.environment}-postgres/postgresql"
   retention_in_days = var.log_retention_days
 
   tags = merge(local.common_tags, {
@@ -285,7 +288,7 @@ resource "aws_db_instance" "read_replica" {
   count = var.create_read_replica ? 1 : 0
 
   identifier = "${var.project_name}-${var.environment}-postgres-replica"
-
+  
   # 複製來源
   replicate_source_db = aws_db_instance.main.identifier
 
@@ -377,7 +380,7 @@ resource "aws_cloudwatch_metric_alarm" "database_free_storage" {
   namespace           = "AWS/RDS"
   period              = "300"
   statistic           = "Average"
-  threshold           = "2000000000" # 2GB in bytes
+  threshold           = "2000000000"  # 2GB in bytes
   alarm_description   = "This metric monitors rds free storage space"
   alarm_actions       = var.sns_topic_arn != null ? [var.sns_topic_arn] : []
 

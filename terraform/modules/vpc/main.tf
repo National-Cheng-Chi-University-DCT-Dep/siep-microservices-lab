@@ -49,7 +49,7 @@ resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.public_subnet_cidrs[count.index]
   availability_zone       = var.availability_zones[count.index]
-  map_public_ip_on_launch = true
+  map_public_ip_on_launch = false
 
   tags = merge(local.common_tags, {
     Name = "${var.project_name}-${var.environment}-public-subnet-${count.index + 1}"
@@ -174,7 +174,9 @@ resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   retention_in_days = var.log_retention_days
 
   tags = merge(local.common_tags, {
-    Name = "${var.project_name}-${var.environment}-vpc-flow-logs"
+    Name = "${var.project_name}
+  kms_key_id = aws_kms_key.main.arn
+-${var.environment}-vpc-flow-logs"
   })
 }
 
@@ -241,7 +243,7 @@ resource "aws_vpc_endpoint" "s3" {
 
   vpc_id       = aws_vpc.main.id
   service_name = "com.amazonaws.${var.aws_region}.s3"
-
+  
   tags = merge(local.common_tags, {
     Name = "${var.project_name}-${var.environment}-s3-endpoint"
   })

@@ -10,6 +10,8 @@
   <a href="https://github.com/<your-repo>/issues"><img src="https://img.shields.io/github/issues/<your-repo>/security-intel-platform?style=flat-square" alt="GitHub issues"></a>
   <img src="https://img.shields.io/badge/Go-1.22+-00ADD8.svg?style=flat-square" alt="Go Version">
   <img src="https://img.shields.io/badge/Next.js-14+-black.svg?style=flat-square&logo=next.js" alt="Next.js Version">
+  <img src="https://img.shields.io/badge/Python-3.10+-3776AB.svg?style=flat-square&logo=python" alt="Python Version">
+  <img src="https://img.shields.io/badge/Quantum-Qiskit-6929C4.svg?style=flat-square" alt="Quantum Computing">
 </p>
 
 > 「資安情報與預測平台」專案的詳細文件，旨在提供一個清晰的概覽、技術細節和實施指南。
@@ -23,7 +25,8 @@
 - [專案概述](#-專案概述-project-overview)
 - [✨ 核心功能](#-核心功能-core-features)
 - [🛠️ 技術棧](#️-技術棧-technology-stack)
-- [🏗️ 優化的專案結構](#️-優化的專案結構-project-structure)
+- [🏗️ 專案結構](#️-專案結構-project-structure)
+- [🔒 安全自動化](#-安全自動化-security-automation)
 - [🚀 CI/CD 專業分工規劃](#-cicd-專業分工規劃)
 - [⚡ 快速入門](#-快速入門-quick-start)
 - [🤝 貢獻指南](#-貢獻指南-contributing)
@@ -33,7 +36,7 @@
 
 ## 📝 專案概述 (Project Overview)
 
-「資安情報平台」是一個創新且自動化的資安威脅情報蒐集與分析平台。我們旨在建立一個易於部署、可擴展的解決方案，幫助個人、研究者乃至組織追蹤、理解並預測不斷演進的資安威 D 脅。本專案將實現多源情報整合、分級存取、多元支付選項，並實驗性地探索前沿技術如大型語言模型 (LLM) 報告生成及量子計算預測零日攻擊的潛力。
+「資安情報平台」是一個創新且自動化的資安威脅情報蒐集與分析平台。我們旨在建立一個易於部署、可擴展的解決方案，幫助個人、研究者乃至組織追蹤、理解並預測不斷演進的資安威脅。本專案將實現多源情報整合、分級存取、多元支付選項，並實驗性地探索前沿技術如大型語言模型 (LLM) 報告生成及量子計算預測零日攻擊的潛力。
 
 <details>
   <summary><strong>💡 補充知識：什麼是資安情報平台 (TIP)？</strong></summary>
@@ -52,12 +55,12 @@
 | :---------------------------------------- | :------------------------------------------------------------------------------------------------------------------------ |
 | **🤖 自動化情報蒐集**                     | 定期從多個公開來源（如 AbuseIPDB、Have I Been Pwned、NVD/CVE）抓取惡意 IP、漏洞資訊、數據泄露事件等，並進行清洗與正規化。 |
 | **🔍 靈活的瀏覽與搜尋**                   | 提供直觀的儀表板與強大的搜尋篩選功能，快速定位特定威脅情報。                                                              |
-| **🧩 階層式存取訂閱制提供免費層與付費層** | ，以 Freemium 模式滿足不同用戶需求，解鎖更即時、更深入的數據。                                                            |
-| **💳 多元支付選項**                       | 支援傳統法幣 (Stripe) 與實驗性的穩定幣支付，提供彈性。                                                                    |
+| **🧩 階層式存取訂閱制**                   | 提供免費層與付費層，以 Freemium 模式滿足不同用戶需求，解鎖更即時、更深入的數據。                                            |
 | **💳 多元支付選項**                       | 支援傳統法幣 (透過 Stripe) 與創新的穩定幣支付，提供全球用戶彈性的付款選擇。                                               |
 | **✍️ 智慧報告生成 (實驗性)**              | 利用大型語言模型 (LLM) 自動生成情報摘要、分析報告或簡報草稿，提升分析效率。                                               |
 | **🔮 量子預測 (概念驗證)**                | 探索在 IBM Quantum Lab 上運行量子演算法，預測潛在的零日攻擊模式。                                                         |
 | **🔐 數據泄露監控**                       | 整合 Have I Been Pwned API，監控帳戶泄露、密碼安全性和域名安全狀態。                                                      |
+| **🔒 安全自動化**                         | 整合 Semgrep 安全掃描，自動修復常見安全問題，確保程式碼安全性。                                                           |
 | **🧩 可擴展與自動化**                     | 基於 Go + Next.js 的微服務友好架構，並透過 Terraform 與 CI/CD 流程實現完全自動化。                                        |
 
 ## 🛠️ 技術棧 (Technology Stack)
@@ -68,82 +71,232 @@
 |                       | Gin Gonic                                      | 一個輕量級、高效能的 Go Web 框架，路由和中介層設計直觀。                    |
 | **前端 (Frontend)**   | **Next.js (React)**                            | 提供伺服器端渲染 (SSR) 和 App Router，有利於 SEO 和開發體驗。               |
 |                       | Tailwind CSS                                   | Utility-First 的 CSS 框架，能快速建構客製化 UI，且易於維護。                |
+| **量子計算**          | **Python + Qiskit**                            | IBM 量子計算框架，支援本地模擬和雲端量子硬體。                             |
+| **AI/ML 服務**        | **Python + LLM APIs**                          | 整合大型語言模型，自動生成安全報告和分析。                                 |
 | **資料庫 (Database)** | **PostgreSQL**                                 | 功能強大、穩定可靠的開源關聯式資料庫，支援複雜查詢和 JSONB 等多種資料類型。 |
 |                       | AWS RDS / OCI Free DB                          | 託管式資料庫服務，簡化了維運、備份和擴展的複雜性。                          |
+| **監控與日誌**        | **Prometheus + Grafana**                       | 完整的監控解決方案，提供指標收集和視覺化。                                |
+| **訊息佇列**          | **Redis + Mosquitto MQTT**                     | 高效能的快取和即時訊息傳遞。                                               |
+| **容器化**            | **Docker + Docker Compose**                    | 標準化的容器化部署，支援多環境配置。                                       |
 | **基礎設施 (IaC)**    | **Terraform**                                  | 用程式碼來定義和管理雲端資源，實現可重複、可追蹤的基礎設施部署。            |
-| **CI/CD**             | **GitHub Actions, Drone CI, AWS CodePipeline** | 專業分工，結合各平台優勢，打造穩定、安全的自動化流程。                      |
+| **安全掃描**          | **Semgrep**                                    | 靜態程式碼分析工具，自動檢測和修復安全漏洞。                               |
+| **CI/CD**             | **GitHub Actions**                             | 完整的自動化流程，包含程式碼品質檢查、安全掃描和部署。                      |
 |                       | Amazon ECR                                     | AWS 託管的 Docker 容器註冊表，安全可靠。                                    |
 |                       | Vercel                                         | Next.js 的最佳部署平台，提供全球 CDN 和自動化的 CI/CD 流程。                |
 
-HTTP REST API：統一的 JSON 回應格式，完整的 Swagger 文檔
-gRPC API：高效能的二進制協議，支援串流
-MQTT 通訊：即時威脅情報推送和訂閱
-JWT 安全：無狀態認證，支援 Bearer Token
-HIBP API 整合：完整的 Have I Been Pwned API v3 支援，包含帳戶泄露檢查、密碼安全驗證、域名監控
-測試自動化：Robot Framework 覆蓋所有 API 端點
+## 🏗️ 專案結構 (Project Structure)
 
-## 🏗️ 優化的專案結構 (Project Structure)
+本專案採用現代化的 Monorepo 結構，整合多種技術棧和服務：
 
-本專案採用前後端分離的 Monorepo 結構，以實現清晰的職責劃分和高效的開發流程。
+```plaintext
+siep-microservices-lab/
+├── .github/                    # GitHub 相關配置
+│   ├── workflows/              # CI/CD 工作流程
+│   │   ├── ci.yml             # 主要 CI 流程
+│   │   ├── security-auto-fix.yml  # 安全自動修復
+│   │   ├── quantum-runner.yml # 量子任務執行器
+│   │   ├── quantum-ci.yml     # 量子服務 CI
+│   │   └── data-collection.yml # 數據收集排程
+│   └── ISSUE_TEMPLATE/        # Issue 模板
+├── backend/                   # Go 後端服務 (Clean Architecture)
+│   ├── cmd/                   # 應用程式進入點
+│   ├── internal/              # 內部包
+│   ├── pkg/                   # 可重用包
+│   ├── api/                   # API 定義
+│   ├── database/              # 資料庫相關
+│   ├── scripts/               # 後端腳本
+│   ├── Dockerfile            # 後端容器化
+│   ├── go.mod                # Go 模組
+│   └── Makefile              # 後端建置腳本
+├── frontend/                  # Next.js 前端應用 (App Router)
+│   ├── src/
+│   │   ├── app/              # App Router 頁面
+│   │   └── components/       # React 元件
+│   ├── public/               # 靜態資源
+│   ├── package.json          # 前端依賴
+│   └── Dockerfile           # 前端容器化
+├── services/                 # 微服務模組
+│   ├── quantum-predictor/    # 量子預測服務
+│   │   ├── main.py          # 量子服務主程式
+│   │   ├── quantum_predictor.py  # 量子預測邏輯
+│   │   ├── circuit_designer.py   # 量子電路設計
+│   │   ├── tests/           # 量子服務測試
+│   │   ├── requirements.txt  # Python 依賴
+│   │   └── Dockerfile       # 量子服務容器化
+│   └── llm-reporter/        # LLM 報告生成服務
+│       ├── app.py           # LLM 服務主程式
+│       ├── requirements.txt  # Python 依賴
+│       └── Dockerfile       # LLM 服務容器化
+├── packages/                 # 共享套件 (Monorepo)
+│   ├── api-main/            # API 主套件
+│   ├── tsconfig-custom/     # 自定義 TypeScript 配置
+│   ├── ui-components/       # 共享 UI 元件
+│   └── web-app/             # Web 應用套件
+├── quantum-service/          # IBM Quantum Python 模組
+│   ├── circuits/            # 量子電路定義
+│   ├── tests/               # Python 測試
+│   ├── main.py              # 程式主進入點
+│   ├── requirements.txt      # Python 依賴項
+│   └── Dockerfile           # 量子服務容器化
+├── terraform/                # 基礎設施即程式碼 (IaC)
+│   ├── environments/        # 環境配置
+│   │   ├── dev/            # 開發環境
+│   │   └── prod/           # 生產環境
+│   ├── modules/            # Terraform 模組
+│   │   ├── ecs/            # ECS 服務模組
+│   │   ├── rds/            # RDS 資料庫模組
+│   │   ├── security/       # 安全組模組
+│   │   └── vpc/            # VPC 網路模組
+│   └── README.md           # Terraform 說明
+├── docker/                  # Docker 相關配置
+│   └── Dockerfile          # 多服務 Dockerfile
+├── nginx/                   # Nginx 配置
+│   ├── nginx.conf          # 主配置
+│   └── conf.d/             # 站點配置
+├── supervisor/              # 程序管理配置
+│   ├── supervisord.conf    # Supervisor 主配置
+│   └── conf.d/             # 服務配置
+│       ├── postgresql.conf # PostgreSQL 配置
+│       ├── redis.conf      # Redis 配置
+│       ├── mosquitto.conf  # MQTT 配置
+│       ├── prometheus.conf # Prometheus 配置
+│       ├── grafana.conf    # Grafana 配置
+│       └── backend.conf    # 後端配置
+├── grafana/                 # Grafana 配置
+│   ├── provisioning-sit/   # 資料來源配置
+│   └── dashboards-sit/     # 儀表板配置
+├── prometheus/              # Prometheus 配置
+│   └── config-sit/         # 監控配置
+├── mosquitto/               # MQTT 配置
+│   └── config-sit/         # MQTT 服務配置
+├── redis/                   # Redis 配置
+│   └── redis-sit.conf      # Redis 服務配置
+├── database/                # 資料庫相關
+│   └── init/               # 初始化腳本
+├── scripts/                 # 系統腳本
+│   ├── security_auto_fix.py # 安全自動修復
+│   ├── test_security_fix.py # 安全修復測試
+│   ├── fix-docker-build.sh # Docker 建置修復
+│   ├── build-docker.sh     # Docker 建置腳本
+│   ├── start-services.sh   # 服務啟動腳本
+│   ├── init-services.sh    # 服務初始化
+│   ├── init-database.sh    # 資料庫初始化
+│   ├── init-redis.sh       # Redis 初始化
+│   ├── init-mqtt.sh        # MQTT 初始化
+│   ├── init-monitoring.sh  # 監控初始化
+│   └── wait-for-it.sh      # 服務等待腳本
+├── tests/                   # 測試相關
+│   ├── api/                # API 測試
+│   ├── config/             # 配置測試
+│   └── README.md           # 測試說明
+├── tests-e2e/               # 端到端測試
+├── notebooks/               # Jupyter Notebooks
+├── docs/                    # 專案文件
+├── documentation/           # 技術文件
+├── infra/                   # 基礎設施配置
+├── .github/                 # GitHub 配置
+├── .cursor/                 # Cursor IDE 配置
+├── backups/                 # 備份檔案
+├── docker-compose.dev.yml   # 開發環境 Docker Compose
+├── docker-compose.sit.yml   # SIT 環境 Docker Compose
+├── docker-compose.prod.yml  # 生產環境 Docker Compose
+├── package.json             # 根目錄 package.json
+├── turbo.json               # Turborepo 配置
+├── Makefile.security        # 安全相關 Makefile
+├── env.example              # 環境變數範例
+├── vault.env                # Vault 環境變數
+├── semgrep-results.json     # Semgrep 掃描結果
+├── DOCKER_BUILD_FIX_REPORT.md # Docker 建置修復報告
+├── CONTRIBUTING.md          # 貢獻指南
+├── CODE_OF_CONDUCT.md       # 行為準則
+├── LICENSE                  # 授權文件
+└── README.md                # 本文件
+```
 
-````plaintext
-security-intel-platform/
-├── .github/                    # GitHub 相關配置 (CI/CD, Issue Templates)
-├── backend/
-├── quantum-service/            # IBM Quantum Python 模組
-+ │   ├── circuits/               # 量子電路定義
-+ │   │   └── pattern_prediction.py
-+ │   ├── tests/                  # Python 測試
-+ │   │   └── test_circuits.py
-+ │   ├── main.py                 # 程式主進入點 (可被後端觸發)
-+ │   ├── requirements.txt        # Python 依賴項 (qiskit, numpy)
-+ │   └── Dockerfile              # 用於打包 Python 環境的 Dockerfile                  # Golang 後端服務 (Clean Architecture)
-├── frontend/                   # Next.js 前端應用 (App Router)
-├── terraform/                  # 基礎設施即程式碼 (IaC)
-├── docs/                       # 專案文件 (架構, 指南)
-├── docker/                     # 本地開發用的 Docker Compose
-├── .drone.yml                  # Drone.io CI 配置
-├── .gitignore
-├── CODE_OF_CONDUCT.md
-├── CONTRIBUTING.md
-├── LICENSE
-└── README.md                   # 本文件
+## 🔒 安全自動化 (Security Automation)
 
-## 系統架構圖
+本專案整合了先進的安全自動化工具，確保程式碼和基礎設施的安全性：
+
+### Semgrep 安全掃描
+- **自動掃描**: 使用 Semgrep 自動檢測安全問題
+- **智能修復**: 自動修復常見的安全配置問題
+- **詳細報告**: 生成完整的修復報告
+- **備份保護**: 自動備份原始檔案
+- **驗證機制**: 修復後自動驗證效果
+
+### 支援修復的問題類型
+- **Nginx 配置問題**: 修復安全標頭和 H2C 走私漏洞
+- **Dockerfile 安全問題**: 添加非 root 用戶
+- **Terraform 安全問題**: 啟用加密、日誌記錄等安全功能
+
+### 使用方式
+```bash
+# 安裝依賴
+pip install semgrep pyyaml requests
+
+# 執行完整修復流程
+make -f Makefile.security security-full
+
+# 分步驟執行
+make -f Makefile.security security-scan    # 掃描
+make -f Makefile.security security-fix     # 修復
+make -f Makefile.security security-verify  # 驗證
+```
+
+## 🚀 CI/CD 專業分工規劃
+
+本專案採用現代化的 CI/CD 流程，結合多種工具實現專業級的自動化：
+
+### GitHub Actions 工作流程
+
+| 工作流程 | 觸發條件 | 主要功能 |
+|---------|---------|---------|
+| **ci.yml** | Push/PR | 程式碼品質檢查、單元測試、安全性掃描 |
+| **security-auto-fix.yml** | 手動/排程 | 自動修復 Semgrep 發現的安全問題 |
+| **quantum-runner.yml** | 排程 | 執行量子計算任務 |
+| **quantum-ci.yml** | quantum-service 變更 | 量子服務的 CI/CD |
+| **data-collection.yml** | 排程 | 自動化數據收集 |
+
+### 系統架構圖
+
 ```mermaid
 graph TD
-    subgraph User Interaction
-        U[User/Client] --> FE(Next.js on Vercel)
+    subgraph "開發流程"
+        DEV[開發者] --> GITHUB[GitHub Repository]
+        GITHUB --> GA[GitHub Actions]
+        GA --> SECURITY[安全掃描]
+        GA --> TEST[測試執行]
+        GA --> BUILD[建置流程]
     end
 
-    subgraph CI/CD Automation
-        G[GitHub] --PR/Push--> GA[GitHub Actions]
-        GA --Lint/Test--> G
-        GA --Deploy--> FE
-        GA --On Success--> D[Drone.io]
-        D --Build & Push Image--> ECR[AWS ECR]
-        ECR --New Image--> CP[AWS CodePipeline]
-        G --Terraform Change--> CP_TF[AWS CodePipeline for TF]
+    subgraph "服務架構"
+        BUILD --> BACKEND[Go Backend]
+        BUILD --> FRONTEND[Next.js Frontend]
+        BUILD --> QUANTUM[Quantum Service]
+        BUILD --> LLM[LLM Reporter]
     end
 
-    subgraph AWS Cloud
-        FE --> BE[API: Go on EC2/ECS]
-        BE --> DB[(PostgreSQL on RDS)]
-
-        CP --Deploy--> BE
-        CP_TF --Apply--> AWS_INFRA[Managed AWS Resources]
-
-        subgraph External Services
-            BE --> S3[Stripe API]
-            BE --> LLM[LLM API]
-            BE --> QC[IBM Quantum API]
-        end
+    subgraph "監控與管理"
+        BACKEND --> PROMETHEUS[Prometheus]
+        PROMETHEUS --> GRAFANA[Grafana]
+        BACKEND --> REDIS[Redis Cache]
+        BACKEND --> MQTT[Mosquitto MQTT]
     end
 
-    subgraph Data Collection
-        Collector[Cron: GitHub Actions] --> BE
+    subgraph "基礎設施"
+        BACKEND --> POSTGRES[PostgreSQL]
+        BACKEND --> AWS[AWS Services]
+        AWS --> ECS[ECS/Fargate]
+        AWS --> RDS[RDS Database]
+        AWS --> ECR[ECR Registry]
     end
-````
+
+    subgraph "安全自動化"
+        SECURITY --> SEMGREP[Semgrep Scanner]
+        SEMGREP --> AUTO_FIX[自動修復]
+        AUTO_FIX --> VERIFY[驗證修復]
+    end
+```
 
 ## 🔐 Have I Been Pwned (HIBP) API 整合
 
@@ -192,160 +345,6 @@ curl -H "Authorization: Bearer YOUR_JWT_TOKEN" \
      "http://localhost:8080/api/v1/hibp/domain/example.com/breaches"
 ```
 
-## 🚀 CI/CD 專業分工規劃
-
-在本專案中，我們結合使用 GitHub Actions、Drone CI 和 AWS CodePipeline，讓它們各司其職，建立一個分工合作的專業級自動化流程。
-
-### 職責分工總覽
-
-| 工具                 | 在本專案中的主要職責                       | 觸發時機 / 核心優勢                                                                                                            |
-| :------------------- | :----------------------------------------- | :----------------------------------------------------------------------------------------------------------------------------- |
-| **GitHub Actions**   | **程式碼品質檢查、前端部署、觸發下游流程** | **觸發**: `git push` 到任何分支, 創建 `PR` 時<br>**優勢**: 與 GitHub 無縫整合、快速回饋、生態系龐大、排程任務                  |
-| **Drone CI**         | **後端應用程式的建置、打包、容器化**       | **觸發**: 在 GitHub Actions 檢查通過後，由 Webhook 觸發<br>**優勢**: 自我託管、Docker 原生、配置簡潔                           |
-| **AWS CodePipeline** | **後端部署、基礎設施 (Terraform) 變更**    | **觸發**: ECR 有新鏡像時或 `terraform/` 目錄有變更時<br>**優勢**: 與 AWS IAM 深度整合、原生支援 AWS 服務、可視化流程與手動審批 |
-
-quantum-service 目錄詳解
-circuits/: 存放所有 Qiskit 量子電路的定義。將電路邏輯與主程式分離，有利於測試和管理。
-
-tests/: 使用 pytest 框架編寫的單元測試。這些測試主要針對本地模擬器運行，以驗證電路建構和資料處理的正確性，而不會真的呼叫 IBM 的硬體。
-
-main.py: 腳本的主進入點。它負責接收參數（例如，從 Go 後端傳來的情資數據），載入電路，連接到 IBM Quantum 服務，執行任務，並將結果寫回資料庫或日誌。
-
-requirements.txt: 列出所有 Python 依賴項，例如 qiskit, qiskit-ibm-provider, numpy 等。
-
-Dockerfile: 一個專為此 Python 環境設計的 Dockerfile。它會安裝所有依賴項，並將程式碼打包成一個可執行的容器。
-
-後端如何與 Python 模組互動？
-Go 後端 (backend) 不會直接執行 Python 程式碼。它會透過以下方式觸發這個打包好的 quantum-service 容器來執行任務：
-
-準備數據: Go 後端將需要分析的情資數據整理好，存入資料庫中的一個特定任務表，狀態為「待處理」。
-
-觸發執行: Go 後端可以透過 AWS SDK 觸發一個 AWS Batch 任務或 ECS Task，該任務就是運行我們打包好的 quantum-service Docker 鏡像。
-
-執行與回寫: quantum-service 容器啟動後，從資料庫讀取「待處理」的任務，連接 IBM Quantum Cloud 執行計算，最後將結果寫回資料庫，並更新任務狀態為「已完成」。
-
-這種非同步 (asynchronous) 的設計模式非常適合耗時較長的計算任務，不會阻塞主後端服務。
-
-Part 2: 規劃量子計算的 CI/CD 流程
-量子計算模組的 CI/CD 流程與 Web 應用不同，它更專注於程式碼的正確性、可重複性和打包。這個流程完全可以在 GitHub Actions 中完成。
-
-我們可以在 .github/workflows/ 目錄下新增一個檔案 quantum-ci.yml。
-
-quantum-ci.yml 工作流程詳解
-觸發條件:
-
-YAML
-
-on:
-push:
-paths: - 'quantum-service/**'
-pull_request:
-paths: - 'quantum-service/**'
-只有當 quantum-service/ 目錄下的程式碼有變動時，才觸發此工作流程，以節省資源。
-
-Job 步驟:
-
-設定 Python 環境:
-
-YAML
-
-- name: Set up Python
-  uses: actions/setup-python@v4
-  with:
-  python-version: '3.10'
-  安裝依賴項:
-
-YAML
-
-- name: Install dependencies
-  run: |
-  python -m pip install --upgrade pip
-  pip install -r quantum-service/requirements.txt
-  程式碼風格檢查 (Linting):
-
-YAML
-
-- name: Lint with flake8
-  run: |
-  pip install flake8
-  flake8 quantum-service/ --count --show-source --statistics
-  單元測試與模擬器測試 (Unit & Simulation Tests):
-
-這是最關鍵的一步。測試不應該連接到真實的 IBM 量子電腦。
-
-使用 pytest 和 Qiskit 內建的本地模擬器 (AerSimulator) 來驗證電路是否能成功運行並產出預期格式的結果。
-
-YAML
-
-- name: Test with pytest
-  run: |
-  pip install pytest
-  pytest quantum-service/tests/
-  建置並推送 Docker 鏡像 (CD 部分):
-
-和 Drone CI 為後端做的事情一樣，當程式碼合併到 main 分支時，我們將 Python 環境打包成 Docker 鏡像並推送到 ECR。
-
-YAML
-
-- name: Build and push Docker image
-  if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-  uses: docker/build-push-action@v4
-  with:
-  context: ./quantum-service
-  push: true
-  tags: your-aws-account-id.dkr.ecr.your-region.amazonaws.com/quantum-service:latest
-
-### 各平台詳細任務規劃
-
-<details>
-  <summary><strong>點此展開詳細的 CI/CD 任務規劃</strong></summary>
-
-#### 1. GitHub Actions：第一道防線與快速反應者
-
-在 `.github/workflows/` 目錄下，設定以下工作流程：
-
-- **`code-quality.yml` (在每次 `push` 和 `PR` 時觸發)**
-  - **Linter 檢查**：對 `backend/` 運行 `golangci-lint`；對 `frontend/` 運行 `ESLint`。
-  - **單元測試**：對 `backend/` 運行 `go test ./...`；對 `frontend/` 運行 `npm test`。
-  - **安全性掃描**：使用 `Trivy` 或 `CodeQL` 掃描程式碼。
-  - **Terraform 驗證**：對 `terraform/` 目錄運行 `terraform validate`。
-- **`deploy-frontend.yml` (僅在 `push` 到 `main` 分支時觸發)**
-  - **觸發 Vercel 部署**：利用 Vercel 官方整合自動部署前端。
-- **`data-collection.yml` (`schedule` 定時觸發)**
-  - **執行排程任務**：定時呼叫後端 API，啟動情報蒐集。
-- **`trigger-downstream.yml` (`code-quality.yml` 成功後觸發)**
-  - **觸發 Drone CI**：使用 Webhook 向 Drone CI 平台發送請求，啟動後端建置。
-
-#### 2. Drone CI：後端建置與容器化專家
-
-在根目錄的 `.drone.yml` 中，定義後端建置流程：
-
-- **Pipeline 步驟**：
-  1. **Clone**：複製最新的程式碼。
-  2. **Build Binary & Docker Image**：編譯 Go 應用，並基於 `backend/Dockerfile` 建置 Docker 鏡像。
-  3. **Push to ECR**：將標記好版本 (`Git SHA`) 的鏡像推送到 Amazon ECR。
-
-#### 3. AWS CodePipeline：雲端部署總指揮官
-
-在 AWS Console 中，設定兩個主要的 Pipeline：
-
-- **後端應用程式部署 (`backend-deploy-pipeline`)**
-  1. **Source**: 監聽 Amazon ECR 的新鏡像。
-  2. **Deploy**: 使用 AWS CodeDeploy 將新鏡像安全地部署到 EC2/ECS。
-- **基礎設施部署 (`infra-terraform-pipeline`)**
-  1. **Source**: 監聽 `terraform/` 目錄的變更。
-  2. **Build**: 使用 AWS CodeBuild 運行 `terraform plan`。
-  3. **Approval**: 加入手動審批階段，人工確認變更。
-  4. **Deploy**: 使用 AWS CodeBuild 運行 `terraform apply`。
-
-</details>
-
-### 總結流程
-
-> 開發者推送程式碼 ➔ **GitHub Actions** (品質檢查) ➔ (若後端變更) **Drone CI** (建置鏡像) ➔ **AWS CodePipeline** (部署應用)
-
----
-
 ## ⚡ 快速入門 (Quick Start)
 
 <details>
@@ -356,6 +355,7 @@ YAML
 - Git, Docker & Docker Compose
 - Go (>= 1.22)
 - Node.js (>= 18)
+- Python (>= 3.10)
 - Terraform (>= 1.5)
 - AWS CLI (已配置憑證)
 
@@ -364,23 +364,34 @@ YAML
 1.  **複製儲存庫**：
 
     ```bash
-    git clone [https://github.com/](https://github.com/)<your-repo>/security-intel-platform.git
-    cd security-intel-platform
+    git clone [https://github.com/](https://github.com/)<your-repo>/siep-microservices-lab.git
+    cd siep-microservices-lab
     ```
 
 2.  **配置環境變數**：
 
     > ⚠️ **安全警告**：切勿將包含 API Key、資料庫密碼等敏感資訊的 `.env` 檔案提交到 Git 儲存庫！請務必將其加入 `.gitignore` 檔案中。
 
-    參考 `backend/.env.example` 和 `frontend/.env.example` (需自行創建) 來建立你的 `.env` 文件。
+    參考 `env.example` 來建立你的環境變數文件。
 
-3.  **啟動依賴服務 (Docker)**：
+3.  **修復 Docker 建置問題**（如果需要）：
 
     ```bash
-    docker-compose -f docker/docker-compose.yml up -d
+    # 執行 Docker 建置修復腳本
+    ./scripts/fix-docker-build.sh
     ```
 
-4.  **運行後端服務** (使用 Makefile)：
+4.  **啟動依賴服務 (Docker)**：
+
+    ```bash
+    # 開發環境
+    docker-compose -f docker-compose.dev.yml up -d
+    
+    # 或 SIT 環境
+    docker-compose -f docker-compose.sit.yml up -d
+    ```
+
+5.  **運行後端服務** (使用 Makefile)：
 
     ```bash
     cd backend
@@ -389,12 +400,35 @@ YAML
 
     > ℹ️ 後端預設會在 `http://localhost:8080` 運行。
 
-5.  **運行前端應用**：
-`bash
-      cd frontend
-      npm install
-      npm run dev
-      ` > ℹ️ 前端預設會在 `http://localhost:3000` 運行。
+6.  **運行前端應用**：
+
+    ```bash
+    cd frontend
+    npm install
+    npm run dev
+    ```
+
+    > ℹ️ 前端預設會在 `http://localhost:3000` 運行。
+
+7.  **執行安全掃描**（可選）：
+
+    ```bash
+    # 執行安全自動修復
+    make -f Makefile.security security-full
+    ```
+
+### 服務端口配置
+
+| 服務 | 端口 | 描述 |
+|------|------|------|
+| Backend API | 8080 | 主要 API 服務 |
+| Frontend | 3000 | Next.js 前端應用 |
+| PostgreSQL | 5432 | 資料庫服務 |
+| Redis | 6379 | 快取服務 |
+| MQTT | 1883 | 訊息佇列 |
+| Prometheus | 9090 | 監控服務 |
+| Grafana | 3001 | 儀表板服務 |
+
 </details>
 
 ---
@@ -405,6 +439,36 @@ YAML
 
 請務必遵守我們的 **行為準則 (`CODE_OF_CONDUCT.md`)**。
 
+### 貢獻流程
+
+1. **Fork 專案**
+2. **建立功能分支**: `git checkout -b feature/amazing-feature`
+3. **提交變更**: `git commit -m 'Add some amazing feature'`
+4. **推送到分支**: `git push origin feature/amazing-feature`
+5. **開啟 Pull Request**
+
+### 開發指南
+
+- 遵循現有的程式碼風格
+- 添加適當的測試
+- 更新相關文件
+- 確保所有測試通過
+- 執行安全掃描檢查
+
 ## 📜 授權 (License)
 
 本專案根據 **MIT License** 發佈。詳情請參閱 `LICENSE` 文件。
+
+---
+
+## 📞 支援與聯絡
+
+如果您在使用過程中遇到問題或有任何建議，請：
+
+1. 查看 [Issues](https://github.com/<your-repo>/issues) 頁面
+2. 建立新的 Issue 描述問題
+3. 參考 `CONTRIBUTING.md` 了解貢獻流程
+
+---
+
+**🎉 感謝您對資安情報平台的關注與支持！**

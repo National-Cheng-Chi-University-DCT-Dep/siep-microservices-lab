@@ -1,0 +1,100 @@
+# 安全自動修復 Makefile
+
+.PHONY: help security-scan security-fix security-report security-clean
+
+# 預設目標
+help:
+	@echo "🔒 安全問題自動修復工具"
+	@echo ""
+	@echo "可用命令："
+	@echo "  make security-scan     - 執行 Semgrep 安全掃描"
+	@echo "  make security-fix      - 自動修復發現的安全問題"
+	@echo "  make security-report   - 生成安全修復報告"
+	@echo "  make security-clean    - 清理備份檔案"
+	@echo "  make security-verify   - 驗證修復效果"
+	@echo ""
+
+# 執行 Semgrep 安全掃描
+security-scan:
+	@echo "🔍 執行 Semgrep 安全掃描..."
+	@if command -v semgrep >/dev/null 2>&1; then \
+		semgrep scan --config auto --json --output semgrep-results.json; \
+		echo "✅ 掃描完成，結果已儲存到 semgrep-results.json"; \
+	else \
+		echo "❌ Semgrep 未安裝，請先安裝：pip install semgrep"; \
+		exit 1; \
+	fi
+
+# 自動修復安全問題
+security-fix: security-scan
+	@echo "🔧 開始自動修復安全問題..."
+	@if [ -f semgrep-results.json ]; then \
+		python scripts/security_auto_fix.py semgrep-results.json; \
+	else \
+		echo "❌ 找不到 Semgrep 結果檔案，請先執行 make security-scan"; \
+		exit 1; \
+	fi
+
+# 生成安全修復報告
+security-report:
+	@echo "📄 生成安全修復報告..."
+	@if [ -f security-fix-report.md ]; then \
+		cat security-fix-report.md; \
+	else \
+		echo "❌ 找不到修復報告，請先執行 make security-fix"; \
+	fi
+
+# 驗證修復效果
+security-verify:
+	@echo "🔍 驗證修復效果..."
+	@if [ -f semgrep-results.json ]; then \
+		semgrep scan --config auto --json --output semgrep-results-after-fix.json; \
+		@if [ -f semgrep-results-after-fix.json ]; then \
+			before_count=$$(python -c "import json; data=json.load(open('semgrep-results.json')); print(len(data.get('results', [])))" 2>/dev/null || echo "0"); \
+			after_count=$$(python -c "import json; data=json.load(open('semgrep-results-after-fix.json')); print(len(data.get('results', [])))" 2>/dev/null || echo "0"); \
+			echo "修復前問題數量: $$before_count"; \
+			echo "修復後問題數量: $$after_count"; \
+			if [ "$$after_count" -lt "$$before_count" ]; then \
+				echo "✅ 成功修復了 $$((before_count - after_count)) 個安全問題"; \
+			else \
+				echo "❌ 沒有修復任何問題"; \
+			fi; \
+		fi; \
+	else \
+		echo "❌ 找不到原始掃描結果，請先執行 make security-scan"; \
+	fi
+
+# 清理備份檔案
+security-clean:
+	@echo "🧹 清理備份檔案..."
+	@if [ -d backups ]; then \
+		rm -rf backups; \
+		echo "✅ 備份檔案已清理"; \
+	else \
+		echo "📁 沒有找到備份目錄"; \
+	fi
+
+# 完整的安全修復流程
+security-full: security-fix security-verify security-report
+	@echo "🎉 安全修復流程完成！"
+
+# 安裝依賴
+security-install:
+	@echo "📦 安裝安全工具依賴..."
+	@pip install semgrep pyyaml requests
+	@echo "✅ 依賴安裝完成"
+
+# 顯示安全問題摘要
+security-summary:
+	@echo "📊 安全問題摘要："
+	@if [ -f semgrep-results.json ]; then \
+		python -c "import json; data=json.load(open('semgrep-results.json')); results=data.get('results', []); print(f'總問題數量: {len(results)}'); \
+		nginx_count = len([r for r in results if 'nginx' in r.get('path', '').lower()]); \
+		dockerfile_count = len([r for r in results if 'dockerfile' in r.get('path', '').lower()]); \
+		terraform_count = len([r for r in results if 'terraform' in r.get('path', '').lower()]); \
+		print(f'Nginx 問題: {nginx_count}'); \
+		print(f'Dockerfile 問題: {dockerfile_count}'); \
+		print(f'Terraform 問題: {terraform_count}');" 2>/dev/null || echo "❌ 無法解析結果檔案"; \
+	else \
+		echo "❌ 找不到掃描結果，請先執行 make security-scan"; \
+	fi

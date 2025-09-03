@@ -6,7 +6,7 @@
 terraform {
   # 最低 Terraform 版本要求
   required_version = ">= 1.0"
-
+  
   # 必要的 Provider 版本
   required_providers {
     aws = {
@@ -18,16 +18,16 @@ terraform {
       version = "~> 3.1"
     }
   }
-
+  
   # 遠端狀態後端設定
   backend "s3" {
     # 請將以下設定替換為您的實際值
-    bucket         = "security-intel-tfstate-2024" # 您的 S3 儲存桶名稱
-    key            = "dev/terraform.tfstate"       # 狀態檔案路徑
-    region         = "ap-northeast-1"              # AWS 區域
-    encrypt        = true                          # 啟用加密
-    dynamodb_table = "security-intel-tfstate-lock" # DynamoDB 表格用於狀態鎖定
-
+    bucket         = "security-intel-tfstate-2024"    # 您的 S3 儲存桶名稱
+    key            = "dev/terraform.tfstate"          # 狀態檔案路徑
+    region         = "ap-northeast-1"                 # AWS 區域
+    encrypt        = true                             # 啟用加密
+    dynamodb_table = "security-intel-tfstate-lock"   # DynamoDB 表格用於狀態鎖定
+    
     # 可選：使用 KMS 加密
     # kms_key_id = "alias/terraform-state-key"
   }
@@ -40,7 +40,7 @@ terraform {
 # AWS Provider 設定
 provider "aws" {
   region = var.aws_region
-
+  
   # 預設標籤，會自動套用到所有支援的資源
   default_tags {
     tags = {

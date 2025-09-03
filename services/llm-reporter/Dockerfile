@@ -32,4 +32,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
 EXPOSE ${PORT}
 
 # 啟動應用程式
+USER non-root
 CMD ["python", "app.py"]

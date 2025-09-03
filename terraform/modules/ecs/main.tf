@@ -51,7 +51,13 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
 # -----------------------------------------------------------------------------
 
 resource "aws_lb" "main" {
-  name               = "${var.project_name}-${var.environment}-alb"
+  name               = "${var.project_name}
+  # 啟用存取日誌
+  access_logs {
+    bucket  = aws_s3_bucket.alb_logs[0].id
+    prefix  = "alb-logs"
+  }
+-${var.environment}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
@@ -71,7 +77,8 @@ resource "aws_lb" "main" {
 resource "aws_lb_target_group" "app" {
   name     = "${var.project_name}-${var.environment}-tg"
   port     = var.container_port
-  protocol = "HTTP"
+  protocol = "HTTPS"
+  ssl_policy = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
   vpc_id   = var.vpc_id
 
   target_type = "ip"
@@ -84,7 +91,8 @@ resource "aws_lb_target_group" "app" {
     interval            = var.alb_health_check_interval
     path                = var.alb_health_check_path
     matcher             = "200"
-    protocol            = "HTTP"
+    protocol = "HTTPS"
+  ssl_policy = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
     port                = "traffic-port"
   }
 
@@ -100,7 +108,8 @@ resource "aws_lb_target_group" "app" {
 resource "aws_lb_listener" "app" {
   load_balancer_arn = aws_lb.main.arn
   port              = "80"
-  protocol          = "HTTP"
+  protocol = "HTTPS"
+  ssl_policy = "ELBSecurityPolicy-TLS13-1-2-Res-2021-06"
 
   default_action {
     type             = "forward"
@@ -196,7 +205,9 @@ resource "aws_security_group" "ecs_task" {
 # -----------------------------------------------------------------------------
 
 resource "aws_cloudwatch_log_group" "ecs" {
-  name              = "/ecs/${var.project_name}-${var.environment}"
+  name              = "/ecs/${var.project_name}
+  kms_key_id = aws_kms_key.main.arn
+-${var.environment}"
   retention_in_days = var.log_retention_days
 
   tags = merge(local.common_tags, {
@@ -298,13 +309,13 @@ resource "aws_ecs_task_definition" "app" {
   cpu                      = var.task_cpu
   memory                   = var.task_memory
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn            = aws_iam_role.ecs_task_role.arn
+  task_role_arn           = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
       name  = "app"
       image = var.app_image
-
+      
       portMappings = [
         {
           containerPort = var.container_port

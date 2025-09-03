@@ -186,13 +186,13 @@ variable "alb_unhealthy_threshold" {
 variable "allowed_cidr_blocks" {
   description = "允許存取的 CIDR 區塊"
   type        = list(string)
-  default     = ["0.0.0.0/0"] # 開發環境允許所有來源，生產環境應限制
+  default     = ["0.0.0.0/0"]  # 開發環境允許所有來源，生產環境應限制
 }
 
 variable "enable_deletion_protection" {
   description = "啟用刪除保護"
   type        = bool
-  default     = false # 開發環境設為 false，生產環境應設為 true
+  default     = false  # 開發環境設為 false，生產環境應設為 true
 }
 
 # -----------------------------------------------------------------------------
