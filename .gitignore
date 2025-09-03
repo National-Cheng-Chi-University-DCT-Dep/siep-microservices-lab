@@ -89,3 +89,4 @@ htmlcov/
 *.sqlite3
 *.db
 *.env
+*.env

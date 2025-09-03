@@ -272,19 +272,19 @@ output "application_health_check_url" {
 output "ecs_summary" {
   description = "ECS 配置摘要"
   value = {
-    cluster_name              = aws_ecs_cluster.main.name
-    service_name              = aws_ecs_service.app.name
-    task_definition_family    = aws_ecs_task_definition.app.family
-    desired_count             = aws_ecs_service.app.desired_count
-    task_cpu                  = var.task_cpu
-    task_memory               = var.task_memory
-    container_port            = var.container_port
-    alb_dns_name              = aws_lb.main.dns_name
-    application_url           = "http://${aws_lb.main.dns_name}"
-    auto_scaling_enabled      = var.enable_auto_scaling
+    cluster_name           = aws_ecs_cluster.main.name
+    service_name          = aws_ecs_service.app.name
+    task_definition_family = aws_ecs_task_definition.app.family
+    desired_count         = aws_ecs_service.app.desired_count
+    task_cpu              = var.task_cpu
+    task_memory           = var.task_memory
+    container_port        = var.container_port
+    alb_dns_name          = aws_lb.main.dns_name
+    application_url       = "http://${aws_lb.main.dns_name}"
+    auto_scaling_enabled  = var.enable_auto_scaling
     service_discovery_enabled = var.enable_service_discovery
-    min_capacity              = var.enable_auto_scaling ? var.min_capacity : null
-    max_capacity              = var.enable_auto_scaling ? var.max_capacity : null
+    min_capacity          = var.enable_auto_scaling ? var.min_capacity : null
+    max_capacity          = var.enable_auto_scaling ? var.max_capacity : null
   }
 }
 

@@ -1,0 +1,56 @@
+groups:
+  - name: security_intel_alerts
+    rules:
+      - alert: BackendServiceDown
+        expr: up{job="security-intel-backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend service is down"
+          description: "The security intelligence backend service has been down for more than 1 minute"
+
+      - alert: DatabaseServiceDown
+        expr: up{job="postgres"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database service is down"
+          description: "The PostgreSQL database service has been down for more than 1 minute"
+
+      - alert: CacheServiceDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cache service is down"
+          description: "The Redis cache service has been down for more than 1 minute"
+
+      - alert: MQTTServiceDown
+        expr: up{job="mosquitto"} == 0
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "MQTT service is down"
+          description: "The MQTT message broker service has been down for more than 1 minute"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 90%"
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80%"

@@ -82,9 +82,9 @@ resource "aws_secretsmanager_secret" "app_secrets" {
 resource "aws_secretsmanager_secret_version" "app_secrets" {
   secret_id = aws_secretsmanager_secret.app_secrets.id
   secret_string = jsonencode({
-    jwt_secret         = var.jwt_secret
-    encryption_key     = var.encryption_key
-    api_key            = var.api_key
+    jwt_secret        = var.jwt_secret
+    encryption_key    = var.encryption_key
+    api_key          = var.api_key
     third_party_tokens = var.third_party_tokens
   })
 }

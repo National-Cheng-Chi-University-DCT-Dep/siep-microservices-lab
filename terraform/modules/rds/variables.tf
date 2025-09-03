@@ -62,7 +62,7 @@ variable "db_instance_class" {
   type        = string
   default     = "db.t3.micro"
   validation {
-    condition     = can(regex("^db\\.", var.db_instance_class))
+    condition = can(regex("^db\\.", var.db_instance_class))
     error_message = "實例類型必須以 'db.' 開頭。"
   }
 }
