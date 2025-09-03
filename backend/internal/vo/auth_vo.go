@@ -1,154 +1,232 @@
 package vo
 
 import (
+	"strings"
 	"time"
-
-	"github.com/google/uuid"
 )
 
-// 認證回應
-type AuthResponse struct {
-	AccessToken  string    `json:"access_token" example:"eyJhbGciOiJIUzI1NiIsIn..."`
-	RefreshToken string    `json:"refresh_token" example:"eyJhbGciOiJIUzI1NiIsIn..."`
-	ExpiresIn    int       `json:"expires_in" example:"3600"` // 秒數
-	TokenType    string    `json:"token_type" example:"Bearer"`
-	UserID       uuid.UUID `json:"user_id" example:"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"`
-	Username     string    `json:"username" example:"johnsmith"`
-}
-
-// 使用者資料回應
-type UserProfileResponse struct {
-	ID                    uuid.UUID  `json:"id" example:"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"`
-	Username              string     `json:"username" example:"johnsmith"`
-	Email                 string     `json:"email" example:"john.smith@example.com"`
-	FullName              string     `json:"full_name,omitempty" example:"John Smith"`
-	AvatarURL             string     `json:"avatar_url,omitempty" example:"https://example.com/avatar.jpg"`
-	Role                  string     `json:"role" example:"premium"`
-	IsActive              bool       `json:"is_active" example:"true"`
-	EmailVerified         bool       `json:"email_verified" example:"true"`
-	AuthProvider          string     `json:"auth_provider" example:"google"`
-	SubscriptionType      string     `json:"subscription_type" example:"premium"`
-	SubscriptionExpiresAt *time.Time `json:"subscription_expires_at,omitempty" example:"2023-12-31T23:59:59Z"`
-	APIQuota              int        `json:"api_quota" example:"1000"`
-	APIUsage              int        `json:"api_usage" example:"50"`
-	CreatedAt             time.Time  `json:"created_at" example:"2023-01-01T12:00:00Z"`
-	LastLogin             *time.Time `json:"last_login,omitempty" example:"2023-06-01T15:30:45Z"`
-}
-
-// API Key 回應
-type APIKeyResponse struct {
-	ID          uuid.UUID  `json:"id" example:"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"`
-	Name        string     `json:"name" example:"My API Key"`
-	Description string     `json:"description,omitempty" example:"For integration with my app"`
-	Key         string     `json:"key,omitempty" example:"sk_live_************************"`
-	Prefix      string     `json:"prefix" example:"sk_live_12345"`
-	LastUsed    *time.Time `json:"last_used,omitempty" example:"2023-06-01T15:30:45Z"`
-	ExpiresAt   *time.Time `json:"expires_at,omitempty" example:"2024-01-01T00:00:00Z"`
-	CreatedAt   time.Time  `json:"created_at" example:"2023-01-01T12:00:00Z"`
-	IsActive    bool       `json:"is_active" example:"true"`
-}
-
-// API Key 列表回應
-type APIKeysListResponse struct {
-	Keys []APIKeyResponse `json:"keys"`
-}
-
-// 驗證 Token 回應
-type ValidateTokenResponse struct {
-	Valid   bool      `json:"valid" example:"true"`
-	UserID  uuid.UUID `json:"user_id,omitempty" example:"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"`
-	Expires time.Time `json:"expires,omitempty" example:"2023-07-01T00:00:00Z"`
-}
-
-// OAuth 提供者資訊
-type OAuthProviderInfo struct {
-	Provider    string `json:"provider" example:"google"`
-	IsEnabled   bool   `json:"is_enabled" example:"true"`
-	RedirectURI string `json:"redirect_uri,omitempty" example:"https://your-app.com/auth/callback/google"`
-}
-
-// OAuth 提供者列表回應
-type OAuthProvidersResponse struct {
-	Providers []OAuthProviderInfo `json:"providers"`
-}
-
-// 寄送驗證信結果回應
-type EmailSentResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Message string `json:"message" example:"Verification email sent successfully"`
-}
-
-// 註冊回應
-type RegisterResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Message string `json:"message" example:"User registered successfully"`
-	UserID  uuid.UUID `json:"user_id" example:"a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"`
-}
-
-// 登入回應
-type LoginResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Message string `json:"message" example:"Login successful"`
-	AuthResponse
-}
-
-// 刷新 Token 回應
-type RefreshTokenResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Message string `json:"message" example:"Token refreshed successfully"`
-	AuthResponse
-}
-
-// 登出回應
-type LogoutResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Message string `json:"message" example:"Logout successful"`
-}
-
-// 更改密碼回應
-type ChangePasswordResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Message string `json:"message" example:"Password changed successfully"`
-}
-
-// 重設密碼回應
-type ResetPasswordResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Message string `json:"message" example:"Password reset email sent"`
-}
-
-// 確認重設密碼回應
-type ConfirmResetPasswordResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Message string `json:"message" example:"Password reset confirmed"`
-}
-
-// 獲取使用者回應
-type GetUserResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Message string `json:"message" example:"User retrieved successfully"`
-	User    UserProfileResponse `json:"user"`
-}
-
-// 更新個人資料回應
-type UpdateProfileResponse struct {
-	Success bool   `json:"success" example:"true"`
-	Message string `json:"message" example:"Profile updated successfully"`
-	User    UserProfileResponse `json:"user"`
-}
-
-// 認證 Token 回應
+// AuthTokenResponse 認證令牌回應
 type AuthTokenResponse struct {
-	AccessToken  string    `json:"access_token" example:"eyJhbGciOiJIUzI1NiIsIn..."`
-	RefreshToken string    `json:"refresh_token" example:"eyJhbGciOiJIUzI1NiIsIn..."`
-	ExpiresIn    int       `json:"expires_in" example:"3600"`
+	AccessToken  string    `json:"access_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	RefreshToken string    `json:"refresh_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 	TokenType    string    `json:"token_type" example:"Bearer"`
-	ExpiresAt    time.Time `json:"expires_at" example:"2023-07-01T00:00:00Z"`
-	User         UserProfileResponse `json:"user"`
+	ExpiresIn    int       `json:"expires_in" example:"3600"`
+	ExpiresAt    time.Time `json:"expires_at" example:"2024-12-01T15:00:00Z"`
+	User         UserVO    `json:"user"`
 }
 
-// 擴展使用者 VO
+// LoginResponse 登入回應
+// @Description 成功登入後的回應資料
+type LoginResponse struct {
+	BaseResponse
+	Data *AuthTokenResponse `json:"data,omitempty"`
+}
+
+// RegisterResponse 註冊回應
+// @Description 成功註冊後的回應資料
+type RegisterResponse struct {
+	BaseResponse
+	Data *AuthTokenResponse `json:"data,omitempty"`
+}
+
+// RefreshTokenResponse 刷新令牌回應
+// @Description 刷新令牌後的回應資料
+type RefreshTokenResponse struct {
+	BaseResponse
+	Data *AuthTokenResponse `json:"data,omitempty"`
+}
+
+// ExtendedUserVO 擴展的使用者資訊（包含認證相關額外欄位）
 type ExtendedUserVO struct {
-	UserProfileResponse
-	APIKeys []APIKeyResponse `json:"api_keys,omitempty"`
+	UserVO
+	EmailVerified    bool   `json:"email_verified" example:"true"`
+	SubscriptionType string `json:"subscription_type" example:"premium"`
+}
+
+// GetUserResponse 取得使用者回應
+// @Description 取得使用者資訊的回應
+type GetUserResponse struct {
+	BaseResponse
+	Data *ExtendedUserVO `json:"data,omitempty"`
+}
+
+// UpdateProfileResponse 更新個人檔案回應
+// @Description 更新個人檔案後的回應
+type UpdateProfileResponse struct {
+	BaseResponse
+	Data *ExtendedUserVO `json:"data,omitempty"`
+}
+
+// UserListVO 使用者列表
+type UserListVO struct {
+	Users      []UserVO      `json:"users"`
+	Pagination PaginationVO  `json:"pagination"`
+}
+
+// GetUserListResponse 取得使用者列表回應
+// @Description 取得使用者列表的回應
+type GetUserListResponse struct {
+	BaseResponse
+	Data *UserListVO `json:"data,omitempty"`
+}
+
+// ExtendedAPIKeyVO 擴展的API金鑰資訊（包含額外欄位）
+type ExtendedAPIKeyVO struct {
+	APIKeyVO
+	Key         string  `json:"key,omitempty" example:"sk_live_..."`
+	KeyPreview  string  `json:"key_preview" example:"sk_live_****_****_1234"`
+	UsedQuota   int     `json:"used_quota" example:"1250"`
+	LastUsedIP  *string `json:"last_used_ip,omitempty" example:"192.168.1.100"`
+}
+
+// CreateAPIKeyResponse 建立API金鑰回應
+// @Description 建立API金鑰後的回應，只有在建立時會回傳完整的金鑰
+type CreateAPIKeyResponse struct {
+	BaseResponse
+	Data *ExtendedAPIKeyVO `json:"data,omitempty"`
+}
+
+// GetAPIKeyResponse 取得API金鑰回應
+// @Description 取得API金鑰資訊的回應
+type GetAPIKeyResponse struct {
+	BaseResponse
+	Data *ExtendedAPIKeyVO `json:"data,omitempty"`
+}
+
+// APIKeyListVO API金鑰列表
+type APIKeyListVO struct {
+	APIKeys    []ExtendedAPIKeyVO `json:"api_keys"`
+	Pagination PaginationVO       `json:"pagination"`
+}
+
+// GetAPIKeyListResponse 取得API金鑰列表回應
+// @Description 取得API金鑰列表的回應
+type GetAPIKeyListResponse struct {
+	BaseResponse
+	Data *APIKeyListVO `json:"data,omitempty"`
+}
+
+// UpdateAPIKeyResponse 更新API金鑰回應
+// @Description 更新API金鑰後的回應
+type UpdateAPIKeyResponse struct {
+	BaseResponse
+	Data *ExtendedAPIKeyVO `json:"data,omitempty"`
+}
+
+// ChangePasswordResponse 修改密碼回應
+// @Description 修改密碼後的回應
+type ChangePasswordResponse struct {
+	BaseResponse
+}
+
+// ResetPasswordResponse 重設密碼回應
+// @Description 重設密碼請求後的回應
+type ResetPasswordResponse struct {
+	BaseResponse
+	Data *struct {
+		Message string `json:"message" example:"Password reset email sent"`
+	} `json:"data,omitempty"`
+}
+
+// ConfirmResetPasswordResponse 確認重設密碼回應
+// @Description 確認重設密碼後的回應
+type ConfirmResetPasswordResponse struct {
+	BaseResponse
+}
+
+// LogoutResponse 登出回應
+// @Description 登出後的回應
+type LogoutResponse struct {
+	BaseResponse
+}
+
+// DeleteUserResponse 刪除使用者回應
+// @Description 刪除使用者後的回應
+type DeleteUserResponse struct {
+	BaseResponse
+}
+
+// DeleteAPIKeyResponse 刪除API金鑰回應
+// @Description 刪除API金鑰後的回應
+type DeleteAPIKeyResponse struct {
+	BaseResponse
+}
+
+// ProfileStatsVO 個人檔案統計
+type ProfileStatsVO struct {
+	TotalAPIRequests    int64 `json:"total_api_requests" example:"15000"`
+	MonthlyAPIRequests  int64 `json:"monthly_api_requests" example:"2500"`
+	RemainingAPIQuota   int   `json:"remaining_api_quota" example:"7500"`
+	TotalAPIKeys        int   `json:"total_api_keys" example:"3"`
+	ActiveAPIKeys       int   `json:"active_api_keys" example:"2"`
+	SubscriptionStatus  string `json:"subscription_status" example:"active"`
+	DaysUntilExpiration *int   `json:"days_until_expiration,omitempty" example:"45"`
+}
+
+// GetProfileStatsResponse 取得個人檔案統計回應
+// @Description 取得個人檔案統計資訊的回應
+type GetProfileStatsResponse struct {
+	BaseResponse
+	Data *ProfileStatsVO `json:"data,omitempty"`
+}
+
+// AdminStatsVO 管理員統計
+type AdminStatsVO struct {
+	TotalUsers         int64 `json:"total_users" example:"1500"`
+	ActiveUsers        int64 `json:"active_users" example:"1200"`
+	NewUsersThisMonth  int64 `json:"new_users_this_month" example:"150"`
+	TotalAPIRequests   int64 `json:"total_api_requests" example:"500000"`
+	MonthlyAPIRequests int64 `json:"monthly_api_requests" example:"75000"`
+	TotalAPIKeys       int64 `json:"total_api_keys" example:"4500"`
+	ActiveAPIKeys      int64 `json:"active_api_keys" example:"3200"`
+}
+
+// GetAdminStatsResponse 取得管理員統計回應
+// @Description 取得管理員統計資訊的回應
+type GetAdminStatsResponse struct {
+	BaseResponse
+	Data *AdminStatsVO `json:"data,omitempty"`
+}
+
+// MaskAPIKey 遮蔽API金鑰敏感資訊
+func (k *ExtendedAPIKeyVO) MaskAPIKey() {
+	if k.Key != "" {
+		keyLen := len(k.Key)
+		if keyLen <= 12 {
+			k.KeyPreview = k.Key[:4] + strings.Repeat("*", keyLen-4)
+		} else {
+			k.KeyPreview = k.Key[:8] + strings.Repeat("*", keyLen-12) + k.Key[keyLen-4:]
+		}
+		k.Key = "" // 清除完整金鑰
+	}
+}
+
+// CalculateRemainingQuota 計算剩餘配額
+func (u *UserVO) CalculateRemainingQuota() int {
+	remaining := u.APIQuota - u.APIUsage
+	if remaining < 0 {
+		return 0
+	}
+	return remaining
+}
+
+// IsSubscriptionActive 檢查訂閱是否活躍
+func (u *UserVO) IsSubscriptionActive() bool {
+	if u.SubscriptionExpiresAt == nil {
+		return true // 永久訂閱
+	}
+	return u.SubscriptionExpiresAt.After(time.Now())
+}
+
+// GetSubscriptionDaysRemaining 取得訂閱剩餘天數
+func (u *UserVO) GetSubscriptionDaysRemaining() *int {
+	if u.SubscriptionExpiresAt == nil {
+		return nil // 永久訂閱
+	}
+	
+	days := int(u.SubscriptionExpiresAt.Sub(time.Now()).Hours() / 24)
+	if days < 0 {
+		days = 0
+	}
+	return &days
 } 
