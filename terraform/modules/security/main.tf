@@ -463,7 +463,11 @@ resource "aws_wafv2_web_acl" "main" {
 resource "aws_cloudwatch_log_group" "waf_logs" {
   count = var.enable_waf ? 1 : 0
 
-  name              = "/aws/wafv2/${var.project_name}-${var.environment}"
+  name              = "/aws/wafv2/${var.project_name}
+  kms_key_id = aws_kms_key.main.arn
+
+  kms_key_id = aws_kms_key.main.arn
+-${var.environment}"
   retention_in_days = var.log_retention_days
 
   tags = merge(local.common_tags, {
@@ -580,7 +584,11 @@ resource "aws_flow_log" "vpc_flow_logs" {
 resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
   count = var.enable_vpc_flow_logs ? 1 : 0
 
-  name              = "/aws/vpc/flowlogs/${var.project_name}-${var.environment}"
+  name              = "/aws/vpc/flowlogs/${var.project_name}
+  kms_key_id = aws_kms_key.main.arn
+
+  kms_key_id = aws_kms_key.main.arn
+-${var.environment}"
   retention_in_days = var.log_retention_days
 
   tags = merge(local.common_tags, {

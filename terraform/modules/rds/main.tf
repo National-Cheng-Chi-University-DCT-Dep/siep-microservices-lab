@@ -225,6 +225,7 @@ resource "aws_db_instance" "main" {
 resource "aws_kms_key" "rds" {
   description             = "KMS key for RDS encryption"
   deletion_window_in_days = 7
+  enable_key_rotation = true
 
   tags = merge(local.common_tags, {
     Name = "${var.project_name}-${var.environment}-rds-kms"
@@ -269,7 +270,9 @@ resource "aws_iam_role_policy_attachment" "rds_monitoring" {
 # -----------------------------------------------------------------------------
 
 resource "aws_cloudwatch_log_group" "postgresql" {
-  name              = "/aws/rds/instance/${var.project_name}-${var.environment}-postgres/postgresql"
+  name              = "/aws/rds/instance/${var.project_name}
+  kms_key_id = aws_kms_key.main.arn
+-${var.environment}-postgres/postgresql"
   retention_in_days = var.log_retention_days
 
   tags = merge(local.common_tags, {

@@ -76,7 +76,6 @@ server {
         proxy_http_version 1.1;
         # 限制 Upgrade 標頭以防止 H2C 走私
     # 限制 Upgrade 標頭以防止 H2C 走私
-    # 限制 Upgrade 標頭以防止 H2C 走私
     proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
@@ -108,7 +107,6 @@ server {
         proxy_pass http://frontend_servers;
         proxy_http_version 1.1;
         # 限制 Upgrade 標頭以防止 H2C 走私
-    # 限制 Upgrade 標頭以防止 H2C 走私
     # 限制 Upgrade 標頭以防止 H2C 走私
     proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -232,7 +230,6 @@ server {
         proxy_pass http://backend_servers;
         proxy_http_version 1.1;
         # 限制 Upgrade 標頭以防止 H2C 走私
-    # 限制 Upgrade 標頭以防止 H2C 走私
     # 限制 Upgrade 標頭以防止 H2C 走私
     proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
