@@ -22,13 +22,9 @@ type User struct {
 	Username              string     `gorm:"type:varchar(50);unique;not null" json:"username"`
 	Email                 string     `gorm:"type:varchar(100);unique;not null" json:"email"`
 	PasswordHash          string     `gorm:"type:varchar(255);not null" json:"-"`
-	SupabaseID            *uuid.UUID `gorm:"column:supabase_id;type:uuid" json:"supabase_id,omitempty"`
-	AuthProvider          string     `gorm:"type:varchar(20);default:'email'" json:"auth_provider"`
 	Role                  UserRole   `gorm:"type:user_role;default:'basic'" json:"role"`
 	IsActive              bool       `gorm:"default:true" json:"is_active"`
 	EmailVerified         bool       `gorm:"default:false" json:"email_verified"`
-	AvatarURL             string     `gorm:"type:text" json:"avatar_url,omitempty"`
-	FullName              string     `gorm:"type:varchar(100)" json:"full_name,omitempty"`
 	SubscriptionType      string     `gorm:"type:varchar(20);default:'basic'" json:"subscription_type"`
 	SubscriptionExpiresAt *time.Time `gorm:"column:subscription_expires_at" json:"subscription_expires_at"`
 	APIQuota              int        `gorm:"default:1000" json:"api_quota"`

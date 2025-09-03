@@ -1,215 +1,251 @@
-# Docker 開發環境
+# Ultimate Security Intelligence Platform - Docker Setup
 
-這個目錄包含資安情報平台的 Docker 開發環境配置。
+## 概述
 
-## 服務概覽
+這個 Dockerfile 和相關腳本用於初始化 Ultimate Security Intelligence Platform 的所有後端服務。
 
-| 服務                | 描述       | 端口                    | 管理介面               |
-| ------------------- | ---------- | ----------------------- | ---------------------- |
-| **PostgreSQL**      | 主要資料庫 | 5432                    | PgAdmin (5050)         |
-| **Redis**           | 快取和排程 | 6379                    | Redis Commander (8081) |
-| **PgAdmin**         | 資料庫管理 | 5050                    | http://localhost:5050  |
-| **Redis Commander** | Redis 管理 | 8081                    | http://localhost:8081  |
-| **MailHog**         | 郵件測試   | 1025 (SMTP), 8025 (Web) | http://localhost:8025  |
+## 服務架構
 
-## 快速開始
+### 核心服務
 
-### 1. 啟動所有服務
+- **Backend API** (Go): 主要的後端 API 服務，提供 RESTful API 和 gRPC 介面
+- **PostgreSQL**: 主要資料庫，儲存威脅情報、安全事件、資產等資料
+- **Redis**: 快取服務，用於會話管理和資料快取
+- **MQTT (Mosquitto)**: 訊息佇列服務，用於即時通訊和事件通知
 
-```bash
-# 在專案根目錄
-docker-compose -f docker/docker-compose.yml up -d
+### 監控服務
 
-# 或者使用 make 指令 (如果已設定)
-make docker-up
+- **Prometheus**: 監控和指標收集服務
+- **Grafana**: 監控視覺化儀表板
+
+## 目錄結構
+
+```
+docker/
+├── Dockerfile                    # 主要的多階段 Dockerfile
+├── README.md                     # 本檔案
+├── scripts/                      # 服務初始化腳本
+│   ├── init-services.sh         # 主要服務初始化協調腳本
+│   ├── wait-for-it.sh           # 等待服務啟動的通用腳本
+│   ├── init-database.sh         # 資料庫初始化腳本
+│   ├── init-redis.sh            # Redis 初始化腳本
+│   ├── init-mqtt.sh             # MQTT 初始化腳本
+│   ├── init-monitoring.sh       # 監控服務初始化腳本
+│   └── start-services.sh        # 服務啟動主腳本
+├── supervisor/                  # Supervisor 配置
+│   ├── supervisord.conf         # 主要 Supervisor 配置
+│   └── conf.d/                  # 個別服務配置
+├── database/                    # 資料庫相關檔案
+│   └── init/                    # 資料庫初始化腳本
+│       └── 01-init-database.sh # PostgreSQL 初始化腳本
+├── redis/                       # Redis 配置
+│   └── redis-sit.conf          # Redis 配置檔案
+├── mosquitto/                   # MQTT 配置
+│   └── config-sit/             # Mosquitto 配置目錄
+│       └── mosquitto.conf      # Mosquitto 配置檔案
+├── prometheus/                  # Prometheus 配置
+│   └── config-sit/             # Prometheus 配置目錄
+│       ├── prometheus.yml      # 主要配置檔案
+│       └── alert_rules.yml     # 告警規則
+└── grafana/                     # Grafana 配置
+    ├── provisioning-sit/        # 自動配置目錄
+    │   ├── datasources/         # 資料來源配置
+    │   │   └── prometheus.yml  # Prometheus 資料來源
+    │   └── dashboards/          # 儀表板配置
+    │       └── dashboards.yml  # 儀表板自動載入配置
+    └── dashboards-sit/          # 儀表板檔案
+        └── security-intelligence-overview.json # 基本儀表板
 ```
 
-### 2. 檢查服務狀態
+## 建置和使用
+
+### 1. 建置 Docker 鏡像
 
 ```bash
-docker-compose -f docker/docker-compose.yml ps
+# 建置多服務鏡像
+docker build -t security-intel-backend:latest \
+  --build-arg VERSION=v1.0.0 \
+  --build-arg BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
+  --build-arg COMMIT_SHA=$(git rev-parse HEAD) \
+  -f docker/Dockerfile .
 ```
 
-### 3. 檢視日誌
+### 2. 設定環境變數
+
+建立 `.env` 檔案：
 
 ```bash
-# 檢視所有服務日誌
-docker-compose -f docker/docker-compose.yml logs -f
+# 資料庫設定
+POSTGRES_DB=security_intel_sit
+POSTGRES_USER=sit_user
+POSTGRES_PASSWORD=your_secure_password
 
-# 檢視特定服務日誌
-docker-compose -f docker/docker-compose.yml logs -f postgres
+# Redis 設定
+REDIS_PASSWORD=your_redis_password
+
+# MQTT 設定
+MQTT_USERNAME=mqtt_user
+MQTT_PASSWORD=your_mqtt_password
+
+# JWT 設定
+JWT_SECRET=your_jwt_secret_key
+
+# 應用程式設定
+APP_ENV=staging
+APP_DEBUG=false
 ```
 
-### 4. 停止服務
+### 3. 運行容器
 
 ```bash
-docker-compose -f docker/docker-compose.yml down
-
-# 停止並刪除 volumes (注意：會刪除所有資料)
-docker-compose -f docker/docker-compose.yml down -v
+# 運行多服務容器
+docker run -d \
+  --name security-intel-backend \
+  --env-file .env \
+  -p 8080:8080 \
+  -p 5432:5432 \
+  -p 6379:6379 \
+  -p 1883:1883 \
+  -p 9090:9090 \
+  -p 3000:3000 \
+  security-intel-backend:latest
 ```
 
-## 服務詳細資訊
+### 4. 檢查服務狀態
 
-### PostgreSQL 資料庫
+```bash
+# 檢查容器狀態
+docker ps
 
-- **映像**: `postgres:15-alpine`
-- **預設資料庫**: `security_intel`
-- **使用者**: `postgres`
-- **密碼**: `postgres`
-- **連線字串**: `postgres://postgres:postgres@localhost:5432/security_intel?sslmode=disable`
+# 查看服務日誌
+docker logs security-intel-backend
 
-#### 預設測試帳戶
+# 進入容器
+docker exec -it security-intel-backend /bin/bash
+```
 
-- **管理員**: admin@security-intel.com / admin123
-- **測試使用者**: test@security-intel.com / test123
+## 服務端口
 
-### Redis
-
-- **映像**: `redis:7-alpine`
-- **配置**: 啟用 AOF 持久化
-- **連線**: `redis://localhost:6379`
-
-### PgAdmin
-
-- **映像**: `dpage/pgadmin4:latest`
-- **URL**: http://localhost:5050
-- **登入**: admin@security-intel.com / admin
-- **伺服器設定**:
-  - 主機: postgres
-  - 端口: 5432
-  - 使用者: postgres
-  - 密碼: postgres
-
-### Redis Commander
-
-- **映像**: `rediscommander/redis-commander:latest`
-- **URL**: http://localhost:8081
-- **自動連線**: 已配置連線到 Redis
-
-### MailHog
-
-- **映像**: `mailhog/mailhog:latest`
-- **SMTP**: localhost:1025
-- **Web UI**: http://localhost:8025
-- **用途**: 攔截開發環境的郵件
-
-## 資料持久化
-
-以下 volumes 用於資料持久化：
-
-- `postgres_data`: PostgreSQL 資料
-- `redis_data`: Redis 資料
-
-## 網路配置
-
-所有服務都在 `security-intel-network` 網路中，可以互相通信。
+| 服務           | 端口 | 說明                     |
+| -------------- | ---- | ------------------------ |
+| Backend API    | 8080 | RESTful API 和 gRPC 服務 |
+| PostgreSQL     | 5432 | 資料庫服務               |
+| Redis          | 6379 | 快取服務                 |
+| MQTT           | 1883 | 訊息佇列服務             |
+| MQTT WebSocket | 9001 | WebSocket 連接           |
+| Prometheus     | 9090 | 監控服務                 |
+| Grafana        | 3000 | 監控儀表板               |
 
 ## 健康檢查
 
-PostgreSQL 和 Redis 都配置了健康檢查：
+所有服務都包含健康檢查機制：
 
-```bash
-# 檢查 PostgreSQL 健康狀態
-docker-compose -f docker/docker-compose.yml exec postgres pg_isready -U postgres
+- **Backend API**: `http://localhost:8080/api/v1/health`
+- **PostgreSQL**: `pg_isready` 命令
+- **Redis**: `redis-cli ping` 命令
+- **MQTT**: 端口連接檢查
+- **Prometheus**: `http://localhost:9090/-/healthy`
+- **Grafana**: `http://localhost:3000/api/health`
 
-# 檢查 Redis 健康狀態
-docker-compose -f docker/docker-compose.yml exec redis redis-cli ping
-```
+## 監控和日誌
 
-## 疑難排解
+### 監控
+
+- **Prometheus**: 收集所有服務的指標
+- **Grafana**: 提供視覺化儀表板
+- **告警**: 設定自動告警規則
+
+### 日誌
+
+- 所有服務的日誌都輸出到標準輸出
+- 可以使用 Docker 日誌功能查看：`docker logs security-intel-backend`
+- Supervisor 管理所有服務的日誌
+
+## 故障排除
 
 ### 常見問題
 
-1. **端口被佔用**
+1. **服務啟動失敗**
 
-   ```bash
-   # 檢查端口使用情況
-   lsof -i :5432  # PostgreSQL
-   lsof -i :6379  # Redis
-   lsof -i :5050  # PgAdmin
-   ```
+   - 檢查環境變數是否正確設定
+   - 查看容器日誌：`docker logs security-intel-backend`
+   - 確認端口沒有被佔用
 
-2. **資料庫連線失敗**
+2. **資料庫連接失敗**
 
-   ```bash
-   # 檢查容器是否正在運行
-   docker-compose -f docker/docker-compose.yml ps
+   - 確認 PostgreSQL 服務已啟動
+   - 檢查資料庫憑證是否正確
+   - 確認資料庫初始化腳本已執行
 
-   # 檢查 PostgreSQL 日誌
-   docker-compose -f docker/docker-compose.yml logs postgres
-   ```
+3. **監控服務無法訪問**
+   - 確認 Prometheus 和 Grafana 服務已啟動
+   - 檢查防火牆設定
+   - 確認端口映射正確
 
-3. **清理和重建**
-
-   ```bash
-   # 停止並刪除所有資料
-   docker-compose -f docker/docker-compose.yml down -v
-
-   # 重新啟動
-   docker-compose -f docker/docker-compose.yml up -d
-   ```
-
-### 重設資料庫
-
-如果需要重設資料庫：
+### 調試模式
 
 ```bash
-# 停止服務
-docker-compose -f docker/docker-compose.yml stop postgres
+# 以調試模式運行
+docker run -it \
+  --name security-intel-backend-debug \
+  --env-file .env \
+  security-intel-backend:latest \
+  /bin/bash
 
-# 刪除 PostgreSQL volume
-docker volume rm docker_postgres_data
-
-# 重新啟動 PostgreSQL
-docker-compose -f docker/docker-compose.yml up -d postgres
+# 手動啟動服務
+/usr/local/bin/init-services.sh
 ```
 
-## 開發提示
+## 安全考量
 
-1. **連線字串**: 在後端 `.env` 檔案中使用：
+1. **密碼管理**
 
-   ```
-   DATABASE_DSN=postgres://postgres:postgres@localhost:5432/security_intel?sslmode=disable
-   ```
+   - 使用強密碼
+   - 定期更換密碼
+   - 不要在程式碼中硬編碼密碼
 
-2. **Redis 連線**: 在程式中使用：
+2. **網路安全**
 
-   ```
-   REDIS_URL=redis://localhost:6379
-   ```
+   - 限制容器網路訪問
+   - 使用防火牆規則
+   - 考慮使用 VPN 或私有網路
 
-3. **郵件測試**: 設定 SMTP 為 `localhost:1025`，然後在 http://localhost:8025 查看郵件
+3. **資料安全**
+   - 加密敏感資料
+   - 定期備份資料
+   - 實施存取控制
 
-## 監控
+## 開發和測試
 
-### 資源使用情況
+### 開發環境
 
 ```bash
-# 檢視容器資源使用情況
-docker stats
-
-# 檢視特定容器
-docker stats security-intel-db security-intel-redis
+# 建置開發版本
+docker build -t security-intel-backend:dev \
+  --build-arg VERSION=dev \
+  --target backend-service \
+  -f docker/Dockerfile .
 ```
 
-### 日誌監控
+### 測試
 
 ```bash
-# 即時監控所有服務日誌
-docker-compose -f docker/docker-compose.yml logs -f --tail=100
+# 運行測試
+docker run --rm \
+  --env-file .env \
+  security-intel-backend:latest \
+  /scripts/run-tests.sh
 ```
 
-## 備份和還原
+## 貢獻
 
-### 備份資料庫
+歡迎貢獻程式碼！請遵循以下步驟：
 
-```bash
-docker-compose -f docker/docker-compose.yml exec postgres pg_dump -U postgres security_intel > backup.sql
-```
+1. Fork 專案
+2. 建立功能分支
+3. 提交變更
+4. 建立 Pull Request
 
-### 還原資料庫
+## 授權
 
-```bash
-docker-compose -f docker/docker-compose.yml exec -T postgres psql -U postgres security_intel < backup.sql
-```
+本專案採用 MIT 授權條款。詳見 [LICENSE](../LICENSE) 檔案。
