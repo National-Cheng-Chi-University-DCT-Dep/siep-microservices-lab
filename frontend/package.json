@@ -25,6 +25,7 @@
     "@eslint/eslintrc": "^3"
   },
   "overrides": {
-    "tar": "^7.5.21"
+    "tar": "^7.5.21",
+    "brace-expansion": "^2.1.7"
   }
 }
