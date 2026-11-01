@@ -11,7 +11,7 @@
   "dependencies": {
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "next": "15.3.5"
+    "next": "^15.5.28"
   },
   "devDependencies": {
     "typescript": "^5",
@@ -23,5 +23,20 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.5",
     "@eslint/eslintrc": "^3"
+  },
+  "overrides": {
+    "tar": "^7.5.21",
+    "brace-expansion": "^2.1.7",
+    "js-yaml": "^4.3.2",
+    "postcss": "^8.5.23",
+    "minimatch": "^11.0.1",
+    "nanoid": "^3.3.18",
+    "sharp": "^0.35.5",
+    "flatted": "^3.4.2",
+    "picomatch": "^4.0.4",
+    "source-map-js": "^1.2.2",
+    "@humanfs/node": "^0.16.8",
+    "ajv": "^6.14.0",
+    "@eslint/plugin-kit": "^0.3.4"
   }
 }
